@@ -8,6 +8,12 @@ package com.fichajespi.fichajespidestopapp.smartcard;
 import com.fichajespi.fichajespidestopapp.MainWindow;
 import com.fichajespi.fichajespidestopapp.entity.Fichaje;
 import com.fichajespi.fichajespidestopapp.httpClient.RequestSender;
+import com.fichajespi.fichajespidestopapp.httpClient.EstimacionFeignController;
+import com.fichajespi.fichajespidestopapp.entity.EstimacionHoras;
+import feign.Feign;
+import feign.gson.GsonDecoder;
+import feign.gson.GsonEncoder;
+import java.time.LocalDateTime;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
 
@@ -102,20 +108,52 @@ public class CardReader extends Thread {
       builder.append("Hora de ");
       builder.append(fichaje.getTipo());
       builder.append(": ");
-      //DateTimeFormatter formatterIn = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
-      //LocalDateTime dateTime = LocalDateTime.parse(fichaje.getTime(), formatterIn);
       LocalTime dateTime = LocalTime.parse(fichaje.getHora());
       DateTimeFormatter formatterOut = DateTimeFormatter.ofPattern("HH:mm:ss");
       builder.append(dateTime.format(formatterOut));
       instance.changeFichaje(builder.toString());
 
-      CardReader.sleep(3000);
+      // Solo para fichaje de ENTRADA
+        if ("ENTRADA".equalsIgnoreCase(fichaje.getTipo())) {
+          instance.mostrarSelectorHoras(() -> {
+            Long usuarioId = null;
+            try {
+              usuarioId = Long.parseLong(fichaje.getNumeroUsuario());
+            } catch (Exception e) {
+              usuarioId = null;
+            }
+            if (usuarioId != null) {
+              enviarEstimacionYFinalizar(number, usuarioId, instance.getHorasSeleccionadas());
+            } else {
+              System.err.println("No se pudo obtener usuarioId para la estimación");
+              instance.ocultarSelectorHoras();
+              instance.resetScreen();
+            }
+          });
+      } else {
+        CardReader.sleep(3000);
+        instance.resetScreen();
+      }
     } else {
       instance.changeNumero(number + " no existe");
       CardReader.sleep(5000);
-
+      instance.resetScreen();
     }
+  }
 
+  private void enviarEstimacionYFinalizar(String numero, Long usuarioId, double horas) {
+    try {
+      // Enviar estimación al backend
+      EstimacionFeignController estimacionClient = Feign.builder()
+        .encoder(new GsonEncoder())
+        .decoder(new GsonDecoder())
+        .target(EstimacionFeignController.class, "http://localhost:8080");
+      EstimacionHoras estimacion = new EstimacionHoras(usuarioId, horas, LocalDateTime.now());
+      estimacionClient.crearEstimacion(estimacion);
+    } catch (Exception ex) {
+      System.err.println("Error enviando estimación: " + ex.getMessage());
+    }
+    instance.ocultarSelectorHoras();
     instance.resetScreen();
   }
 

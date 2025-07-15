@@ -16,11 +16,66 @@ import javax.swing.JFrame;
  */
 public class MainWindow extends javax.swing.JFrame {
 
+  private javax.swing.JComboBox<String> comboHoras;
+  private javax.swing.JButton btnFichar;
+  private javax.swing.Timer timerAutoFichar;
+  private Runnable onFichar;
   /**
    * Creates new form MainWindow2
    */
   public MainWindow() {
     initComponents();
+    // Inicializar combo y botón y añadirlos a la interfaz de forma centrada
+    comboHoras = new javax.swing.JComboBox<>();
+    for (double h = 1.0; h <= 12.0; h += 0.25) {
+      comboHoras.addItem(String.format("%.2f", h));
+    }
+    comboHoras.setSelectedItem("4.00");
+    btnFichar = new javax.swing.JButton("Fichar");
+    btnFichar.setFont(new java.awt.Font("sansserif", 1, 22));
+    btnFichar.addActionListener(e -> {
+      if (onFichar != null) onFichar.run();
+    });
+    comboHoras.setFont(new java.awt.Font("sansserif", 0, 22));
+    comboHoras.setVisible(false);
+    btnFichar.setVisible(false);
+    // Usar GroupLayout para centrar los componentes debajo del mensaje principal
+    javax.swing.GroupLayout layout = (javax.swing.GroupLayout) jPanel1.getLayout();
+    jPanel1.add(comboHoras);
+    jPanel1.add(btnFichar);
+    layout.setHorizontalGroup(
+      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+        .addGroup(layout.createSequentialGroup()
+          .addGap(0, 0, Short.MAX_VALUE)
+          .addComponent(comboHoras, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addGap(10)
+          .addComponent(btnFichar, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addGap(0, 0, Short.MAX_VALUE))
+      .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addComponent(jLabelFichaje)
+        .addComponent(jLabelNombre)
+        .addComponent(jLabel1)
+        .addComponent(jLabelNumero)
+        .addComponent(jPanel2))
+    );
+    layout.setVerticalGroup(
+      layout.createSequentialGroup()
+        .addComponent(jLabel1)
+        .addComponent(jPanel2)
+        .addComponent(jLabelNombre)
+        .addComponent(jLabelFichaje)
+        .addGap(10)
+        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+          .addComponent(comboHoras, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+          .addComponent(btnFichar, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+        .addComponent(jLabelNumero)
+        .addGap(0, 0, Short.MAX_VALUE)
+    );
+    // Timer para auto-fichar
+    timerAutoFichar = new javax.swing.Timer(30000, e -> {
+      if (onFichar != null) onFichar.run();
+    });
+    timerAutoFichar.setRepeats(false);
   }
 
   /**
@@ -215,14 +270,14 @@ public class MainWindow extends javax.swing.JFrame {
         new CardReader(mw).start();
 
         /*
-				Scanner scanner = new Scanner(System.in);
-				while (true) {
-					String numeroEmpleado = scanner.next();
-					Fichaje fichaje = RequestSender.sendRequest(numeroEmpleado);
-					if (fichaje != null) {
-						System.out.println(fichaje.getNombreUsuario());
-					}
-				}*/
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+          String numeroEmpleado = scanner.next();
+          Fichaje fichaje = RequestSender.sendRequest(numeroEmpleado);
+          if (fichaje != null) {
+            System.out.println(fichaje.getNombreUsuario());
+          }
+        }*/
       }
     });
   }
@@ -251,6 +306,32 @@ public class MainWindow extends javax.swing.JFrame {
     jLabelNombre.setText("Esperando...");
     jLabelFichaje.setText("Acerque su tarjeta...");
     jLabelNumero.setText("");
+    comboHoras.setVisible(false);
+    btnFichar.setVisible(false);
+    timerAutoFichar.stop();
+  }
+
+  // Mostrar selector de horas y botón solo para fichaje de entrada
+  public void mostrarSelectorHoras(Runnable onFichar) {
+    this.onFichar = onFichar;
+    comboHoras.setSelectedItem("4.00");
+    comboHoras.setVisible(true);
+    btnFichar.setVisible(true);
+    timerAutoFichar.restart();
+  }
+
+  public void ocultarSelectorHoras() {
+    comboHoras.setVisible(false);
+    btnFichar.setVisible(false);
+    timerAutoFichar.stop();
+  }
+
+  public double getHorasSeleccionadas() {
+    try {
+      return Double.parseDouble((String) comboHoras.getSelectedItem());
+    } catch (Exception e) {
+      return 4.0;
+    }
   }
 
   // Variables declaration - do not modify//GEN-BEGIN:variables

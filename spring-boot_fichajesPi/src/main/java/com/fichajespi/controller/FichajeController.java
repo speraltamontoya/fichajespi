@@ -48,7 +48,7 @@ public class FichajeController
 	@PostMapping("/now")
 	public ResponseEntity<?> nuevoFichajeNow(
 			@RequestBody FichajeDtoReqRes fichajeDto) {
-		System.out.println("Fichaje");
+		//System.out.println("Fichaje");
 		return ResponseEntity
 				.status(HttpStatus.CREATED)
 				.body(dtoConverter.fichar(fichajeDto));

@@ -8,7 +8,11 @@ package com.fichajespi.fichajespidestopapp;
 import com.fichajespi.fichajespidestopapp.smartcard.CardReader;
 import com.fichajespi.fichajespidestopapp.tools.CurrentDate;
 import com.fichajespi.fichajespidestopapp.tools.CurrentTime;
+
+import java.util.Locale;
+
 import javax.swing.JFrame;
+import java.util.Locale;
 
 /**
  *
@@ -34,12 +38,14 @@ public class MainWindow extends javax.swing.JFrame {
   public MainWindow(boolean modoTest) {
     this.modoTest = modoTest;
     initComponents();
+    
     // Inicializar combo y botón y añadirlos a la interfaz de forma centrada
     comboHoras = new javax.swing.JComboBox<>();
     for (double h = 1.0; h <= 12.0; h += 0.25) {
-      comboHoras.addItem(String.format("%.2f", h));
+        comboHoras.addItem(String.format(Locale.US, "%.2f", h));
     }
     comboHoras.setSelectedItem("4.00");
+
     btnFichar = new javax.swing.JButton("Fichar");
     btnFichar.setFont(new java.awt.Font("sansserif", 1, 22));
     btnFichar.addActionListener(e -> {

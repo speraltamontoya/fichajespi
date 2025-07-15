@@ -15,6 +15,10 @@ import javax.swing.JFrame;
  * @author alex
  */
 public class MainWindow extends javax.swing.JFrame {
+  private boolean modoTest = false;
+  private javax.swing.JTextField txtUsuarioTest;
+  private javax.swing.JButton btnSimularFichaje;
+  private Runnable onSimularFichaje;
 
   private javax.swing.JComboBox<String> comboHoras;
   private javax.swing.JButton btnFichar;
@@ -24,6 +28,11 @@ public class MainWindow extends javax.swing.JFrame {
    * Creates new form MainWindow2
    */
   public MainWindow() {
+    this(false);
+  }
+
+  public MainWindow(boolean modoTest) {
+    this.modoTest = modoTest;
     initComponents();
     // Inicializar combo y botón y añadirlos a la interfaz de forma centrada
     comboHoras = new javax.swing.JComboBox<>();
@@ -39,10 +48,10 @@ public class MainWindow extends javax.swing.JFrame {
     comboHoras.setFont(new java.awt.Font("sansserif", 0, 22));
     comboHoras.setVisible(false);
     btnFichar.setVisible(false);
-    // Usar GroupLayout para centrar los componentes debajo del mensaje principal
     javax.swing.GroupLayout layout = (javax.swing.GroupLayout) jPanel1.getLayout();
     jPanel1.add(comboHoras);
     jPanel1.add(btnFichar);
+    // No añadir controles manuales en la ventana principal, solo ventana emergente en modo test
     layout.setHorizontalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
         .addGroup(layout.createSequentialGroup()
@@ -76,6 +85,11 @@ public class MainWindow extends javax.swing.JFrame {
       if (onFichar != null) onFichar.run();
     });
     timerAutoFichar.setRepeats(false);
+  }
+
+  // Permite a CardReader registrar el callback para el botón de simular fichaje
+  public void setOnSimularFichaje(Runnable r) {
+    this.onSimularFichaje = r;
   }
 
   /**
@@ -256,7 +270,14 @@ public class MainWindow extends javax.swing.JFrame {
     /* Create and display the form */
     java.awt.EventQueue.invokeLater(new Runnable() {
       public void run() {
-        MainWindow mw = new MainWindow();
+        boolean modoTest = false;
+        for (String arg : args) {
+          if ("test".equalsIgnoreCase(arg)) {
+            modoTest = true;
+            break;
+          }
+        }
+        MainWindow mw = new MainWindow(modoTest);
         mw.setVisible(true);
 
         mw.resetScreen();
@@ -267,24 +288,7 @@ public class MainWindow extends javax.swing.JFrame {
         CurrentDate updateDate = new CurrentDate(mw);
         updateDate.start();
 
-        boolean testMode = false;
-        for (String arg : args) {
-          if ("test".equalsIgnoreCase(arg)) {
-            testMode = true;
-            break;
-          }
-        }
-        new CardReader(mw, testMode).start();
-
-        /*
-        Scanner scanner = new Scanner(System.in);
-        while (true) {
-          String numeroEmpleado = scanner.next();
-          Fichaje fichaje = RequestSender.sendRequest(numeroEmpleado);
-          if (fichaje != null) {
-            System.out.println(fichaje.getNombreUsuario());
-          }
-        }*/
+        new CardReader(mw, modoTest).start();
       }
     });
   }

@@ -7,5 +7,5 @@ import feign.RequestLine;
 @Headers({"Content-Type: application/json"})
 public interface EstimacionFeignController {
     @RequestLine("POST /api/estimaciones")
-    EstimacionHoras crearEstimacion(EstimacionHoras estimacion);
+    void crearEstimacion(EstimacionHoras estimacion);
 }

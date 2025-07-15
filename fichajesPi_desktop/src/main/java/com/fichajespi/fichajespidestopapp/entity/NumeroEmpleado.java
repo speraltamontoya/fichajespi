@@ -17,10 +17,16 @@ public class NumeroEmpleado {
 	public NumeroEmpleado() {
 	}
 
-	public NumeroEmpleado(String numeroUsuario) {
-		this.numeroUsuario = numeroUsuario;
-		this.origen = "tarjeta";
-	}
+
+  public NumeroEmpleado(String numeroUsuario) {
+	this.numeroUsuario = numeroUsuario;
+	this.origen = "tarjeta";
+  }
+
+  public NumeroEmpleado(String numeroUsuario, String origen) {
+	this.numeroUsuario = numeroUsuario;
+	this.origen = origen != null ? origen : "tarjeta";
+  }
 
 	public String getNumeroUsuario() {
 		return numeroUsuario;

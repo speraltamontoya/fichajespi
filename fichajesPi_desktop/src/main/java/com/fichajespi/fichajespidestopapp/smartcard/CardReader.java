@@ -13,6 +13,8 @@ import com.fichajespi.fichajespidestopapp.entity.EstimacionHoras;
 import feign.Feign;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
+import com.fichajespi.fichajespidestopapp.httpClient.UsuarioFeignController;
+import com.fichajespi.fichajespidestopapp.httpClient.UsuarioResponse;
 import java.time.LocalDateTime;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
@@ -165,11 +167,8 @@ public class CardReader extends Thread {
 
   private void fichar(String number) throws InterruptedException, IOException {
     Fichaje fichaje;
-    if (testMode) {
-      fichaje = rs.sendRequest(number, "manual");
-    } else {
-      fichaje = rs.sendRequest(number);
-    }
+    // En ambos modos, el origen será 'tarjeta' para que el backend lo registre igual
+    fichaje = rs.sendRequest(number, "tarjeta");
     if (fichaje != null) {
       System.out.println("Fichaje OK");
       instance.changeNumero(number);
@@ -184,8 +183,28 @@ public class CardReader extends Thread {
       instance.changeFichaje(builder.toString());
 
       // Solo para fichaje de ENTRADA
-        if ("ENTRADA".equalsIgnoreCase(fichaje.getTipo())) {
-          instance.mostrarSelectorHoras(() -> {
+      if ("ENTRADA".equalsIgnoreCase(fichaje.getTipo())) {
+        instance.mostrarSelectorHoras(() -> {
+          if (testMode) {
+            // Llamar al backend para obtener el id real
+            try {
+              UsuarioFeignController usuarioClient = Feign.builder()
+                .decoder(new GsonDecoder())
+                .target(UsuarioFeignController.class, "http://localhost:8080");
+              UsuarioResponse usuario = usuarioClient.getIdByNumero(fichaje.getNumeroUsuario());
+              if (usuario != null && usuario.id != null) {
+                enviarEstimacionYFinalizar(number, usuario.id, instance.getHorasSeleccionadas());
+              } else {
+                System.err.println("No se pudo obtener usuarioId para la estimación (modo test)");
+                instance.ocultarSelectorHoras();
+                instance.resetScreen();
+              }
+            } catch (Exception e) {
+              System.err.println("Error consultando usuarioId: " + e.getMessage());
+              instance.ocultarSelectorHoras();
+              instance.resetScreen();
+            }
+          } else {
             Long usuarioId = null;
             try {
               usuarioId = Long.parseLong(fichaje.getNumeroUsuario());
@@ -199,7 +218,8 @@ public class CardReader extends Thread {
               instance.ocultarSelectorHoras();
               instance.resetScreen();
             }
-          });
+          }
+        });
       } else {
         CardReader.sleep(3000);
         instance.resetScreen();
@@ -214,11 +234,20 @@ public class CardReader extends Thread {
   private void enviarEstimacionYFinalizar(String numero, Long usuarioId, double horas) {
     try {
       // Enviar estimación al backend
+      // Gson personalizado para serializar LocalDateTime como ISO-8601
+      com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
+        .registerTypeAdapter(java.time.LocalDateTime.class, new com.google.gson.JsonSerializer<java.time.LocalDateTime>() {
+          @Override
+          public com.google.gson.JsonElement serialize(java.time.LocalDateTime src, java.lang.reflect.Type typeOfSrc, com.google.gson.JsonSerializationContext context) {
+            return new com.google.gson.JsonPrimitive(src.toString());
+          }
+        })
+        .create();
       EstimacionFeignController estimacionClient = Feign.builder()
-        .encoder(new GsonEncoder())
-        .decoder(new GsonDecoder())
+        .encoder(new GsonEncoder(gson))
+        .decoder(new GsonDecoder(gson))
         .target(EstimacionFeignController.class, "http://localhost:8080");
-      EstimacionHoras estimacion = new EstimacionHoras(usuarioId, horas, LocalDateTime.now());
+      EstimacionHoras estimacion = new EstimacionHoras(usuarioId, horas, java.time.LocalDateTime.now());
       estimacionClient.crearEstimacion(estimacion);
     } catch (Exception ex) {
       System.err.println("Error enviando estimación: " + ex.getMessage());

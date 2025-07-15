@@ -43,6 +43,7 @@ public class MainWindow extends javax.swing.JFrame {
     btnFichar = new javax.swing.JButton("Fichar");
     btnFichar.setFont(new java.awt.Font("sansserif", 1, 22));
     btnFichar.addActionListener(e -> {
+      System.out.println("[DEBUG MainWindow] Valor seleccionado en comboHoras: " + comboHoras.getSelectedItem());
       if (onFichar != null) onFichar.run();
     });
     comboHoras.setFont(new java.awt.Font("sansserif", 0, 22));
@@ -80,6 +81,7 @@ public class MainWindow extends javax.swing.JFrame {
         .addComponent(jLabelNumero)
         .addGap(0, 0, Short.MAX_VALUE)
     );
+
     // Timer para auto-fichar
     timerAutoFichar = new javax.swing.Timer(30000, e -> {
       if (onFichar != null) onFichar.run();
@@ -339,10 +341,15 @@ public class MainWindow extends javax.swing.JFrame {
 
   public double getHorasSeleccionadas() {
     try {
-      return Double.parseDouble((String) comboHoras.getSelectedItem());
+      String valor = (String) comboHoras.getSelectedItem();
+      if (valor != null) {
+        valor = valor.replace(',', '.');
+        return Double.parseDouble(valor);
+      }
     } catch (Exception e) {
-      return 4.0;
+      // Ignorar
     }
+    return 4.0;
   }
 
   // Variables declaration - do not modify//GEN-BEGIN:variables

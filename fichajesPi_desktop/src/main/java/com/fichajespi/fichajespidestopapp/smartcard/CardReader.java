@@ -233,6 +233,7 @@ public class CardReader extends Thread {
 
   private void enviarEstimacionYFinalizar(String numero, Long usuarioId, double horas) {
     try {
+      System.out.println("[DEBUG] Valor de horas seleccionadas: " + horas);
       // Enviar estimación al backend
       // Gson personalizado para serializar LocalDateTime como ISO-8601
       com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
@@ -243,11 +244,13 @@ public class CardReader extends Thread {
           }
         })
         .create();
+      EstimacionHoras estimacion = new EstimacionHoras(usuarioId, horas, java.time.LocalDateTime.now());
+      String jsonEstimacion = gson.toJson(estimacion);
+      System.out.println("[DEBUG] JSON enviado al backend: " + jsonEstimacion);
       EstimacionFeignController estimacionClient = Feign.builder()
         .encoder(new GsonEncoder(gson))
         .decoder(new GsonDecoder(gson))
         .target(EstimacionFeignController.class, "http://localhost:8080");
-      EstimacionHoras estimacion = new EstimacionHoras(usuarioId, horas, java.time.LocalDateTime.now());
       estimacionClient.crearEstimacion(estimacion);
     } catch (Exception ex) {
       System.err.println("Error enviando estimación: " + ex.getMessage());

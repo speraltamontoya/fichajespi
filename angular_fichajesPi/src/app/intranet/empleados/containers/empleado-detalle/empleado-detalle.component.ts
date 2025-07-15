@@ -69,4 +69,49 @@ export class EmpleadoDetalleComponent implements OnInit {
     )
   }
 
+
+  onResetPassword(): void {
+    const id = this.model.id;
+    if (!id) return;
+    this.service.resetPassword(id).subscribe(
+      _ => {
+        Popup.toastSucess('', 'Contraseña reseteada y enviada por email');
+      },
+      err => {
+        Popup.toastDanger('Ocurrió un error', err.message);
+        console.log(err)
+      }
+    );
+  }
+
+  onSetPassword(): void {
+    const id = this.model.id;
+    if (!id) return;
+    // Popup.inputBox('Nueva contraseña', 'Indique la nueva contraseña para el usuario', 'Establecer', 'Cancelar').openConfirmBox$().subscribe(resp => {
+    //   if (resp.Success && resp.InputValue) {
+    //     this.service.setPassword(id, resp.InputValue).subscribe(
+    //       _ => {
+    //         Popup.toastSucess('', 'Contraseña establecida correctamente');
+    //       },
+    //       err => {
+    //         Popup.toastDanger('Ocurrió un error', err.message);
+    //         console.log(err)
+    //       }
+    //     );
+    //   }
+    // });
+    const password = prompt('Indique la nueva contraseña para el usuario:');
+    if (password) {
+      this.service.setPassword(id, password).subscribe(
+        _ => {
+          Popup.toastSucess('', 'Contraseña establecida correctamente');
+        },
+        err => {
+          Popup.toastDanger('Ocurrió un error', err.message);
+          console.log(err)
+        }
+      );
+    }
+  }
+
 }

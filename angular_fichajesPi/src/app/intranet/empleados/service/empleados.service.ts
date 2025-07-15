@@ -47,4 +47,15 @@ export class EmpleadosService implements DataCsv {
   public changePassword(id: number, model: Password): Observable<any> {
     return this.httpClient.put<any>(this.endPoint + `/password/${id}`, model)
   }
+
+  /** ADMIN: Resetea la contraseña y envía email */
+  public resetPassword(id: number): Observable<any> {
+    return this.httpClient.post<any>(environment.apiURL + `/admin/usuarios/${id}/reset-password`, {});
+  }
+
+  /** ADMIN: Establece una contraseña manualmente */
+  public setPassword(id: number, password: string): Observable<any> {
+    return this.httpClient.post<any>(environment.apiURL + `/admin/usuarios/${id}/set-password`, { password });
+  }
+
 }

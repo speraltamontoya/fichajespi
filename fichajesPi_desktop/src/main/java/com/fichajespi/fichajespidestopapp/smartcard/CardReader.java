@@ -33,20 +33,37 @@ import javax.smartcardio.TerminalFactory;
  *
  * @author alex
  */
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
 public class CardReader extends Thread {
 
   private MainWindow instance;
   private RequestSender rs;
 
+  private boolean testMode = false;
+
   public CardReader(MainWindow instance) {
+    this(instance, false);
+  }
+
+  public CardReader(MainWindow instance, boolean testMode) {
     this.instance = instance;
     this.rs = new RequestSender();
+    this.testMode = testMode;
+    if (testMode) {
+      SwingUtilities.invokeLater(this::mostrarFormularioTest);
+    }
   }
 
   @Override
   public void run() {
+    if (testMode) {
+      // En modo test, no leer tarjetas
+      return;
+    }
     while (true) {
-
       try {
         // Display the list of terminals
         TerminalFactory factory = TerminalFactory.getDefault();
@@ -56,10 +73,8 @@ public class CardReader extends Thread {
         // Use the first terminal
         CardTerminal terminal = terminals.get(0);
 
-        // Connect wit hthe card
+        // Connect with the card
         if (terminal.isCardPresent()) {
-
-          
           //Simulamos un click de ratón para despertar la pantalla si se ha apagado
           Robot robot = new Robot();
           robot.mousePress(InputEvent.BUTTON1_MASK);
@@ -88,18 +103,73 @@ public class CardReader extends Thread {
             // Disconnect the card
             card.disconnect(false);
           }
-
         }
-
       } catch (Exception e) {
         //System.out.println("Ouch: " + e.toString());
-
       }
     }
   }
 
+  private void mostrarFormularioTest() {
+    JFrame frame = new JFrame("Modo Pruebas - Fichar Manualmente");
+    frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    frame.setSize(400, 180);
+    frame.setLocationRelativeTo(null);
+    frame.setAlwaysOnTop(true);
+
+    JPanel panel = new JPanel();
+    panel.setLayout(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.insets = new Insets(5, 5, 5, 5);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    JLabel label = new JLabel("Introduce número de usuario o código de tarjeta:");
+    JTextField textField = new JTextField(20);
+    JButton btnFichar = new JButton("Fichar");
+    JLabel statusLabel = new JLabel("");
+
+    gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+    panel.add(label, gbc);
+    gbc.gridy = 1; gbc.gridwidth = 2;
+    panel.add(textField, gbc);
+    gbc.gridy = 2; gbc.gridwidth = 1;
+    panel.add(btnFichar, gbc);
+    gbc.gridx = 1; gbc.gridy = 2;
+    panel.add(statusLabel, gbc);
+
+    btnFichar.addActionListener(e -> {
+      String input = textField.getText().trim();
+      if (input.isEmpty()) {
+        statusLabel.setText("Campo vacío");
+        return;
+      }
+      statusLabel.setText("Procesando...");
+      new Thread(() -> {
+        try {
+          fichar(input);
+          SwingUtilities.invokeLater(() -> {
+            statusLabel.setText("Fichaje procesado");
+            textField.setText("");
+          });
+        } catch (Exception ex) {
+          SwingUtilities.invokeLater(() -> statusLabel.setText("Error: " + ex.getMessage()));
+        }
+      }).start();
+    });
+
+    textField.addActionListener(e -> btnFichar.doClick());
+
+    frame.getContentPane().add(panel);
+    frame.setVisible(true);
+  }
+
   private void fichar(String number) throws InterruptedException, IOException {
-    Fichaje fichaje = rs.sendRequest(number);
+    Fichaje fichaje;
+    if (testMode) {
+      fichaje = rs.sendRequest(number, "manual");
+    } else {
+      fichaje = rs.sendRequest(number);
+    }
     if (fichaje != null) {
       System.out.println("Fichaje OK");
       instance.changeNumero(number);

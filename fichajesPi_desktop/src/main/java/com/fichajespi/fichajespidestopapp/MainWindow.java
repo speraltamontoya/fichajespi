@@ -267,7 +267,14 @@ public class MainWindow extends javax.swing.JFrame {
         CurrentDate updateDate = new CurrentDate(mw);
         updateDate.start();
 
-        new CardReader(mw).start();
+        boolean testMode = false;
+        for (String arg : args) {
+          if ("test".equalsIgnoreCase(arg)) {
+            testMode = true;
+            break;
+          }
+        }
+        new CardReader(mw, testMode).start();
 
         /*
         Scanner scanner = new Scanner(System.in);

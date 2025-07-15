@@ -43,39 +43,47 @@ public class RequestSender {
   private static final String uri = "http://localhost:8080";
 
   /*
-	 * private static final HttpClient httpClient = HttpClient.newBuilder()
-	 * .version(HttpClient.Version.HTTP_2) .connectTimeout(Duration.ofSeconds(10))
-	 * .build();
+   * private static final HttpClient httpClient = HttpClient.newBuilder()
+   * .version(HttpClient.Version.HTTP_2) .connectTimeout(Duration.ofSeconds(10))
+   * .build();
    */
+
   public Fichaje sendRequest(String numero) throws IOException, InterruptedException {
+    return sendRequest(numero, null);
+  }
 
+  public Fichaje sendRequest(String numero, String origen) throws IOException, InterruptedException {
     Gson g = new Gson();
-
-    NumeroEmpleado numEmpleado = new NumeroEmpleado(numero);
+    NumeroEmpleado numEmpleado;
+    if (origen != null) {
+      numEmpleado = new NumeroEmpleado(numero, origen);
+    } else {
+      numEmpleado = new NumeroEmpleado(numero);
+    }
 
     //String json = g.toJson(numEmpleado);
     
     
     //For jdk 11
     /*
-		HttpClient httpClient = HttpClient.newBuilder()
-				.version(HttpClient.Version.HTTP_1_1)
-				.connectTimeout(Duration.ofSeconds(10))
-				.build();
+    HttpClient httpClient = HttpClient.newBuilder()
+        .version(HttpClient.Version.HTTP_1_1)
+        .connectTimeout(Duration.ofSeconds(10))
+        .build();
 
-		HttpRequest request = HttpRequest
-				.newBuilder()
-				.POST(HttpRequest.BodyPublishers.ofString(json))
-				.uri(URI.create(uri))
-				.setHeader("User-Agent", "FichajesPi Desktop App") // add request header
-				.header("Content-Type", "application/json")
-				.build();
+    HttpRequest request = HttpRequest
+        .newBuilder()
+        .POST(HttpRequest.BodyPublishers.ofString(json))
+        .uri(URI.create(uri))
+        .setHeader("User-Agent", "FichajesPi Desktop App") // add request header
+        .header("Content-Type", "application/json")
+        .build();
 
-		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-		System.out.println(response.body());
+    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    System.out.println(response.body());
 
-		if (Integer.valueOf(response.statusCode()) == 201)
-			return g.fromJson(response.body(), Fichaje.class);
+    if (Integer.valueOf(response.statusCode()) == 201)
+      return g.fromJson(response.body(), Fichaje.class);
     
      */
     

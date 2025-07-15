@@ -93,6 +93,7 @@ public class MainSecurity extends WebSecurityConfigurerAdapter {
 				.antMatchers("/permiso/**").hasRole(RRHH)
 				.antMatchers("/usuario/password/**").hasRole(USER)
 				.antMatchers("/usuario/miusuario").hasRole(USER)
+				.antMatchers("/admin/usuarios/**").hasRole(RRHH)
 				.antMatchers("/usuario/**").hasRole(RRHH)
 				.antMatchers("/vacaciones/create").hasRole(USER)
 				.antMatchers("/vacaciones/pagesFiltered").hasRole(USER)

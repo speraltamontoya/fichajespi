@@ -141,9 +141,19 @@
 
 
 
-  <div class="w-100 text-center mt-5 mb-5">
+
+  <div class="w-100 text-center mt-5 mb-2">
     <button class="mx-auto btn btn-outline-danger btn-sm " (click)="onDelete()"> <i class="bi bi-trash"></i>
       Eliminar empleado
+    </button>
+  </div>
+
+  <div class="w-100 text-center mb-4">
+    <button class="mx-2 btn btn-outline-primary btn-sm" (click)="onResetPassword()">
+      <i class="bi bi-arrow-clockwise"></i> Resetear contraseña y enviar email
+    </button>
+    <button class="mx-2 btn btn-outline-secondary btn-sm" (click)="onSetPassword()">
+      <i class="bi bi-key"></i> Establecer contraseña manualmente
     </button>
   </div>
 

@@ -23,7 +23,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=fichajes #Usar mismo usuario que la base de datos
       - SPRING_DATASOURCE_PASSWORD=fichajesP0l1 #Usar misma contraseña que la base de datos
       - CLIENT_URL=http://localhost
-      - SPRING_MAIL_HOST=smtp.mailtrap.io #poner dominio del servidor smtp
+      - SPRING_MAIL_HOST=smtp.gmail.com #poner dominio del servidor smtp
       - SPRING_MAIL_PORT=587 #poner puerto del servidor smtp
       - SPRING_MAIL_USERNAME=automatizacionpoliribaroja@gmail.com
       - SPRING_MAIL_PASSWORD=deqp uuxq sknn zihi

@@ -8,7 +8,10 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 import com.fichajespi.dto.converter.UsuarioDtoConverter;
 import com.fichajespi.dto.entity.UsuarioDto;
@@ -19,6 +22,9 @@ import com.fichajespi.service.RolService;
 import com.fichajespi.service.UsuarioService;
 
 @SpringBootApplication
+@ComponentScan({"com.fichajespi", "com.estimaciones"})
+@EnableJpaRepositories({"com.fichajespi.repository", "com.estimaciones.repository"})
+@EntityScan({"com.fichajespi.entity", "com.estimaciones.model"})
 @EnableScheduling
 public class Application {
 

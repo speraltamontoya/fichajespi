@@ -1,5 +1,14 @@
 <div class="d-flex flex-column justify-content-center align-items-center mt-4 ">
   <img class="" src="../../assets/images/fichajespi_logo_mano.svg" alt="" height="200">
+  <div class="mb-3" *ngIf="!model.working">
+    <label for="horasEstimadas" class="form-label fw-bold">Horas estimadas a trabajar</label>
+    <mat-form-field appearance="fill" style="width: 140px;">
+      <mat-label>Horas estimadas</mat-label>
+      <mat-select [(ngModel)]="horasEstimadas" name="horasEstimadas">
+        <mat-option *ngFor="let h of horasLista" [value]="h">{{ h }} horas</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
   <button class="btn bg-pink text-white px-5 py-3 m-5 shadow fs-5 fw-bold" (click)="fichar()"><i
       class="bi bi-watch feather"></i> Fichar</button>
   <div class="bg-light rounded p-4">

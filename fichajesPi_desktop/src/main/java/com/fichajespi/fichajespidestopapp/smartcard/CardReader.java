@@ -43,17 +43,22 @@ public class CardReader extends Thread {
 
   private MainWindow instance;
   private RequestSender rs;
-
   private boolean testMode = false;
+  private String backendUrl;
 
   public CardReader(MainWindow instance) {
-    this(instance, false);
+    this(instance, false, null);
   }
 
   public CardReader(MainWindow instance, boolean testMode) {
+    this(instance, testMode, null);
+  }
+
+  public CardReader(MainWindow instance, boolean testMode, String backendUrl) {
     this.instance = instance;
     this.rs = new RequestSender();
     this.testMode = testMode;
+    this.backendUrl = backendUrl != null ? backendUrl : "http://localhost:8080";
     if (testMode) {
       SwingUtilities.invokeLater(this::mostrarFormularioTest);
     }
@@ -190,7 +195,7 @@ public class CardReader extends Thread {
             try {
               UsuarioFeignController usuarioClient = Feign.builder()
                 .decoder(new GsonDecoder())
-                .target(UsuarioFeignController.class, "http://localhost:8080");
+                .target(UsuarioFeignController.class, backendUrl);
               UsuarioResponse usuario = usuarioClient.getIdByNumero(fichaje.getNumeroUsuario());
               if (usuario != null && usuario.id != null) {
                 enviarEstimacionYFinalizar(number, usuario.id, instance.getHorasSeleccionadas());
@@ -250,7 +255,7 @@ public class CardReader extends Thread {
       EstimacionFeignController estimacionClient = Feign.builder()
         .encoder(new GsonEncoder(gson))
         .decoder(new GsonDecoder(gson))
-        .target(EstimacionFeignController.class, "http://localhost:8080");
+        .target(EstimacionFeignController.class, backendUrl);
       estimacionClient.crearEstimacion(estimacion);
     } catch (Exception ex) {
       System.err.println("Error enviando estimación: " + ex.getMessage());

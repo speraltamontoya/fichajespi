@@ -8,6 +8,7 @@ package com.fichajespi.fichajespidestopapp;
 import com.fichajespi.fichajespidestopapp.smartcard.CardReader;
 import com.fichajespi.fichajespidestopapp.tools.CurrentDate;
 import com.fichajespi.fichajespidestopapp.tools.CurrentTime;
+import com.fichajespi.fichajespidestopapp.tools.BackendConfig;
 
 import java.util.Locale;
 
@@ -38,7 +39,7 @@ public class MainWindow extends javax.swing.JFrame {
   public MainWindow(boolean modoTest) {
     this.modoTest = modoTest;
     initComponents();
-    
+
     // Inicializar combo y botón y añadirlos a la interfaz de forma centrada
     comboHoras = new javax.swing.JComboBox<>();
     for (double h = 1.0; h <= 12.0; h += 0.25) {
@@ -285,6 +286,8 @@ public class MainWindow extends javax.swing.JFrame {
             break;
           }
         }
+        String backendUrl = BackendConfig.getBackendUrl(args);
+        System.out.println("[INFO] Backend URL utilizada: " + backendUrl);
         MainWindow mw = new MainWindow(modoTest);
         mw.setVisible(true);
 
@@ -296,7 +299,7 @@ public class MainWindow extends javax.swing.JFrame {
         CurrentDate updateDate = new CurrentDate(mw);
         updateDate.start();
 
-        new CardReader(mw, modoTest).start();
+        new CardReader(mw, modoTest, backendUrl).start();
       }
     });
   }

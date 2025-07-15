@@ -10,7 +10,12 @@ git clone https://github.com/alejandroferrin/fichajespi.git
 
 echo "#####################__Instalando JDK__"
 #sudo apt -y install openjdk-11-jdk
-sudo apt -y install openjdk-8-jdk
+#sudo apt -y install openjdk-8-jdk
+curl 'https://download.oracle.com/otn/java/jdk/8u441-b07/7ed26d28139143f38c58992680c214a5/jdk-8u441-linux-x64.tar.gz?AuthParam=1752584113_dee4c07c526963be786997b0170ceb7f' -o jdk-8u441-linux-x64.tar.gz
+mkdir -p /usr/lib/jvm
+tar zxvf jdk-8u441-linux-x64.tar.gz -C /usr/lib/jvm
+update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.8.0_441/bin/java" 1
+update-alternatives --set java /usr/lib/jvm/jdk1.8.0_441/bin/java
 
 echo "#####################__Instalando SmartCard Reader__"
 sudo apt-get -y install subversion autoconf debhelper flex libusb-dev libpcsclite-dev libpcsclite1 libccid pcscd pcsc-tools libpcsc-perl libusb-1.0-0-dev libtool libssl-dev cmake checkinstall

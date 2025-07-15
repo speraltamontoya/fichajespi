@@ -1,0 +1,5 @@
+/* Limitar el alto del dropdown de horas para que tenga scroll si hay muchas opciones */
+.horas-dropdown {
+  max-height: 60px;
+  overflow-y: auto;
+}

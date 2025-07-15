@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 import { HomeRoutingModule } from './home-routing.module';
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -36,7 +38,9 @@ import { EmpleadosService } from '../empleados/service/empleados.service';
     CoreModule,
     FichajesSharedModule,
     PermisosSharedModule,
-    VacacionesSharedModule
+    VacacionesSharedModule,
+    MatSelectModule,
+    MatFormFieldModule
   ],
   providers: [
     HomeService,

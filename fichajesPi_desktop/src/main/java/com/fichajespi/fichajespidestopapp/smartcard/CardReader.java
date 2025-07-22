@@ -56,7 +56,7 @@ public class CardReader extends Thread {
 
   public CardReader(MainWindow instance, boolean testMode, String backendUrl) {
     this.instance = instance;
-    this.rs = new RequestSender(this.backendUrl = backendUrl != null ? backendUrl : "http://localhost:8080";);
+    this.rs = new RequestSender(this.backendUrl = backendUrl != null ? backendUrl : "http://localhost:8080");
     this.testMode = testMode;
     if (testMode) {
       SwingUtilities.invokeLater(this::mostrarFormularioTest);

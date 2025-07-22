@@ -1,5 +1,9 @@
 version: '3.1'
 
+networks:
+  fichajes_network:
+    driver: bridge
+
 services:
   db:
     container_name: fichajespi_db
@@ -13,6 +17,8 @@ services:
       - MYSQL_USER=fichajes #Cambiar usuario si se desea
       - MYSQL_PASSWORD=fichajesP0l1 #Cambiar password si se desea
     restart: always
+    networks:
+      - fichajes_network
 
   backendserver:
     container_name: fichajespi_back
@@ -35,6 +41,8 @@ services:
     depends_on:
       - "db"
     restart: always
+    networks:
+      - fichajes_network
 
   frontend:
     container_name: fichajespi_front
@@ -47,7 +55,9 @@ services:
     environment:
       - TZ=Europe/Madrid
     restart: always
-
+    networks:
+      - fichajes_network
+      
   # phpmyadmin:
   #   container_name: fichajespi_dbadmin
   #   image: phpmyadmin

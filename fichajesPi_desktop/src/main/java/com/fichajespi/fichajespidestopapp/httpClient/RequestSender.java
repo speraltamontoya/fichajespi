@@ -40,7 +40,16 @@ import org.apache.hc.core5.http.io.entity.StringEntity;
 public class RequestSender {
 
   //private static final String uri = "http://localhost:8080/fichaje/now";
-  private static final String uri = "http://localhost:8080";
+  //private static final String uri = "http://localhost:8080";
+  private final String uri;
+
+  public RequestSender() {
+    this("http://localhost:8080");
+  }
+
+  public RequestSender(String backendUrl) {
+    this.uri = backendUrl;
+  }
 
   /*
    * private static final HttpClient httpClient = HttpClient.newBuilder()

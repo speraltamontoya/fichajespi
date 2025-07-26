@@ -1,0 +1,3 @@
+[Desktop Entry]
+Name=FichajesPi_Desktop
+Exec=java -Dsun.security.smartcardio.library=/lib/x86_64-linux-gnu/libpcsclite.so.1 -jar /home/pi/fichajespi/fichajesPi_desktop/target/fichajespi-desktp-jar-with-dependencies.jar

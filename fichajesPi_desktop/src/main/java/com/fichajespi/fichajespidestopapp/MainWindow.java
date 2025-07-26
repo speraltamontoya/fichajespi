@@ -33,12 +33,21 @@ public class MainWindow extends javax.swing.JFrame {
    * Creates new form MainWindow2
    */
   public MainWindow() {
-    this(false);
+    this(false,false);
   }
 
-  public MainWindow(boolean modoTest) {
+  public MainWindow(boolean modoTest, boolean fullscreen) {
     this.modoTest = modoTest;
+
+    if (fullscreen) {
+        setUndecorated(true);  // debe ir antes de initComponents
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setUndecorated(true);
+    }
+
     initComponents();
+
+    setVisible(true);
 
     // Inicializar combo y botón y añadirlos a la interfaz de forma centrada
     comboHoras = new javax.swing.JComboBox<>();
@@ -124,7 +133,10 @@ public class MainWindow extends javax.swing.JFrame {
     setBackground(new java.awt.Color(255, 51, 102));
     setLocation(new java.awt.Point(0, 0));
     setLocationByPlatform(true);
-    setMinimumSize(new java.awt.Dimension(480, 320));
+    // original para pantalla integrada raspberry pi
+    // setMinimumSize(new java.awt.Dimension(480, 320)); 
+
+    setMinimumSize(new java.awt.Dimension(620, 480));
     setName("FichajesPi"); // NOI18N
     setUndecorated(true);
     setResizable(false);
@@ -164,8 +176,10 @@ public class MainWindow extends javax.swing.JFrame {
     jLabelDate.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
     jLabelDate.setText("dia");
 
+
     javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
     jPanel2.setLayout(jPanel2Layout);
+
     jPanel2Layout.setHorizontalGroup(
       jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(jPanel2Layout.createSequentialGroup()
@@ -175,6 +189,7 @@ public class MainWindow extends javax.swing.JFrame {
         .addComponent(jLabelDate, javax.swing.GroupLayout.PREFERRED_SIZE, 202, javax.swing.GroupLayout.PREFERRED_SIZE)
         .addContainerGap(17, Short.MAX_VALUE))
     );
+
     jPanel2Layout.setVerticalGroup(
       jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
       .addGroup(jPanel2Layout.createSequentialGroup()
@@ -227,7 +242,9 @@ public class MainWindow extends javax.swing.JFrame {
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-      .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)
+      //.addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)
+      //.addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+      .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
     );
     layout.setVerticalGroup(
       layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -280,15 +297,20 @@ public class MainWindow extends javax.swing.JFrame {
     java.awt.EventQueue.invokeLater(new Runnable() {
       public void run() {
         boolean modoTest = false;
+        boolean fullscreen = false;
         for (String arg : args) {
           if ("test".equalsIgnoreCase(arg)) {
             modoTest = true;
             break;
           }
+          if (arg.equalsIgnoreCase("--fullscreen")) {
+            fullscreen = true;
+          }
         }
         String backendUrl = BackendConfig.getBackendUrl(args);
         System.out.println("[INFO] Backend URL utilizada: " + backendUrl);
-        MainWindow mw = new MainWindow(modoTest);
+        //MainWindow mw = new MainWindow(modoTest);
+        MainWindow mw = new MainWindow(modoTest, fullscreen);
         mw.setVisible(true);
 
         mw.resetScreen();

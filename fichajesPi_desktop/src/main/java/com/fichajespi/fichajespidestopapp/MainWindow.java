@@ -11,7 +11,7 @@ import com.fichajespi.fichajespidestopapp.tools.CurrentTime;
 import com.fichajespi.fichajespidestopapp.tools.BackendConfig;
 
 import java.util.Locale;
-import java.awt.*;
+import java.awt.Dimension;
 
 import javax.swing.JFrame;
 import java.util.Locale;
@@ -34,23 +34,20 @@ public class MainWindow extends javax.swing.JFrame {
    * Creates new form MainWindow2
    */
   public MainWindow() {
-    this(false,false);
+    this(false, null);
   }
 
-  public MainWindow(boolean modoTest, boolean fullscreen) {
+  public MainWindow(boolean modoTest, Dimension customSize) {
     this.modoTest = modoTest;
 
-    // Configurar fullscreen ANTES de initComponents e inicializar ventana
-    if (fullscreen) {
-        configureFullscreenPreInit();
+    if (customSize != null) {
+        setUndecorated(true);  // debe ir antes de initComponents
+        setPreferredSize(customSize);
+        setSize(customSize);
+        setResizable(false);
     }
 
     initComponents();
-
-    // Configurar fullscreen DESPUÉS de initComponents si es necesario
-    if (fullscreen) {
-        configureFullscreenPostInit();
-    }
 
     setVisible(true);
 
@@ -110,89 +107,28 @@ public class MainWindow extends javax.swing.JFrame {
     timerAutoFichar.setRepeats(false);
   }
 
-  /**
-   * Configura la ventana para modo fullscreen ANTES de initComponents
-   */
-  private void configureFullscreenPreInit() {
-    try {
-      System.out.println("[DEBUG] Configurando fullscreen (pre-init)...");
-      
-      // Solo establecer propiedades que deben ir antes de initComponents
-      setUndecorated(true);
-      
-    } catch (Exception e) {
-      System.err.println("[ERROR] Error en configuración fullscreen pre-init: " + e.getMessage());
-      e.printStackTrace();
-    }
-  }
-
-  /**
-   * Configura la ventana para modo fullscreen DESPUÉS de initComponents
-   */
-  private void configureFullscreenPostInit() {
-    try {
-      System.out.println("[DEBUG] Configurando fullscreen (post-init)...");
-      
-      // Obtener información de la pantalla
-      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      GraphicsDevice gd = ge.getDefaultScreenDevice();
-      
-      if (gd.isFullScreenSupported()) {
-        System.out.println("[DEBUG] Fullscreen nativo soportado");
-        // Método 1: Fullscreen nativo (mejor opción si está soportado)
-        // La ventana ya está undecorated desde pre-init
-        
-        // Usamos invokeLater para asegurar que se ejecute después de que la ventana esté completamente inicializada
-        javax.swing.SwingUtilities.invokeLater(() -> {
-          try {
-            gd.setFullScreenWindow(this);
-          } catch (Exception e) {
-            System.err.println("[ERROR] Error estableciendo fullscreen nativo: " + e.getMessage());
-            // Fallback
-            fallbackFullscreen();
-          }
-        });
-      } else {
-        System.out.println("[DEBUG] Fullscreen nativo NO soportado, usando método alternativo");
-        fallbackFullscreen();
-      }
-      
-      System.out.println("[DEBUG] Configuración fullscreen completada");
-      
-    } catch (Exception e) {
-      System.err.println("[ERROR] Error configurando fullscreen post-init: " + e.getMessage());
-      e.printStackTrace();
-      fallbackFullscreen();
-    }
-  }
-
-  /**
-   * Método fallback para fullscreen cuando el nativo no funciona
-   */
-  private void fallbackFullscreen() {
-    try {
-      // Obtener dimensiones de la pantalla
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      System.out.println("[DEBUG] Usando fallback - Dimensiones de pantalla: " + screenSize.width + "x" + screenSize.height);
-      
-      // Establecer posición y tamaño manualmente
-      setBounds(0, 0, screenSize.width, screenSize.height);
-      
-      // Intentar maximizar también (por si acaso)
-      setExtendedState(JFrame.MAXIMIZED_BOTH);
-      
-      // Asegurar que la ventana esté siempre encima
-      setAlwaysOnTop(true);
-      
-    } catch (Exception e) {
-      System.err.println("[ERROR] Error en fallback fullscreen: " + e.getMessage());
-      e.printStackTrace();
-    }
-  }
-
   // Permite a CardReader registrar el callback para el botón de simular fichaje
   public void setOnSimularFichaje(Runnable r) {
     this.onSimularFichaje = r;
+  }
+
+  /**
+   * Parsea el parámetro --resolution y devuelve las dimensiones
+   * @param resolutionString Formato: "1024x768"
+   * @return Dimension object o null si el formato es inválido
+   */
+  private static Dimension parseResolution(String resolutionString) {
+    try {
+      String[] parts = resolutionString.split("x");
+      if (parts.length == 2) {
+        int width = Integer.parseInt(parts[0].trim());
+        int height = Integer.parseInt(parts[1].trim());
+        return new Dimension(width, height);
+      }
+    } catch (NumberFormatException e) {
+      System.err.println("[ERROR] Formato de resolución inválido: " + resolutionString);
+    }
+    return null;
   }
 
   /**
@@ -217,10 +153,7 @@ public class MainWindow extends javax.swing.JFrame {
     setTitle("FichajesPi");
     setBackground(new java.awt.Color(255, 51, 102));
     setLocation(new java.awt.Point(0, 0));
-    // Solo usar setLocationByPlatform si NO estamos en modo fullscreen
-    if (!isUndecorated()) {
-        setLocationByPlatform(true);
-    }
+    setLocationByPlatform(true);
     // original para pantalla integrada raspberry pi
     // setMinimumSize(new java.awt.Dimension(480, 320)); 
 
@@ -385,20 +318,26 @@ public class MainWindow extends javax.swing.JFrame {
     java.awt.EventQueue.invokeLater(new Runnable() {
       public void run() {
         boolean modoTest = false;
-        boolean fullscreen = false;
-        for (String arg : args) {
-          if ("test".equalsIgnoreCase(arg)) {
+        Dimension customSize = null;
+        
+        for (int i = 0; i < args.length; i++) {
+          if ("test".equalsIgnoreCase(args[i])) {
             modoTest = true;
-            break;
           }
-          if (arg.equalsIgnoreCase("--fullscreen")) {
-            fullscreen = true;
+          if ("--resolution".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+            customSize = parseResolution(args[i + 1]);
+            if (customSize != null) {
+              System.out.println("[INFO] Resolución personalizada aplicada: " + customSize.width + "x" + customSize.height);
+            } else {
+              System.err.println("[ERROR] Formato de resolución inválido. Use: --resolution 1024x768");
+            }
           }
         }
+        
         String backendUrl = BackendConfig.getBackendUrl(args);
         System.out.println("[INFO] Backend URL utilizada: " + backendUrl);
-        //MainWindow mw = new MainWindow(modoTest);
-        MainWindow mw = new MainWindow(modoTest, fullscreen);
+        
+        MainWindow mw = new MainWindow(modoTest, customSize);
         mw.setVisible(true);
 
         mw.resetScreen();

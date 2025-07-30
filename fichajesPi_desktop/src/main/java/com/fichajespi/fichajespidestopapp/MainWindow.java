@@ -9,12 +9,10 @@ import com.fichajespi.fichajespidestopapp.smartcard.CardReader;
 import com.fichajespi.fichajespidestopapp.tools.CurrentDate;
 import com.fichajespi.fichajespidestopapp.tools.CurrentTime;
 import com.fichajespi.fichajespidestopapp.tools.BackendConfig;
+import com.fichajespi.fichajespidestopapp.tools.Logger;
 
 import java.util.Locale;
 import java.awt.Dimension;
-
-import javax.swing.JFrame;
-import java.util.Locale;
 
 /**
  *
@@ -30,6 +28,9 @@ public class MainWindow extends javax.swing.JFrame {
   private javax.swing.JButton btnFichar;
   private javax.swing.Timer timerAutoFichar;
   private Runnable onFichar;
+  
+  // Control de estado para evitar lecturas múltiples
+  private boolean permitirLecturaTarjeta = true;
   /**
    * Creates new form MainWindow2
    */
@@ -49,6 +50,9 @@ public class MainWindow extends javax.swing.JFrame {
 
     initComponents();
 
+    // Configurar ventana para mantenerse siempre en primer plano
+    setAlwaysOnTop(true);
+
     setVisible(true);
 
     // Inicializar combo y botón y añadirlos a la interfaz de forma centrada
@@ -61,55 +65,193 @@ public class MainWindow extends javax.swing.JFrame {
     btnFichar = new javax.swing.JButton("Fichar");
     btnFichar.setFont(new java.awt.Font("sansserif", 1, 22));
     btnFichar.addActionListener(e -> {
-      System.out.println("[DEBUG MainWindow] Valor seleccionado en comboHoras: " + comboHoras.getSelectedItem());
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("MainWindow - Valor seleccionado en comboHoras: " + comboHoras.getSelectedItem());
       if (onFichar != null) onFichar.run();
     });
     comboHoras.setFont(new java.awt.Font("sansserif", 0, 22));
     comboHoras.setVisible(false);
     btnFichar.setVisible(false);
-    javax.swing.GroupLayout layout = (javax.swing.GroupLayout) jPanel1.getLayout();
-    jPanel1.add(comboHoras);
-    jPanel1.add(btnFichar);
-    // No añadir controles manuales en la ventana principal, solo ventana emergente en modo test
-    layout.setHorizontalGroup(
-      layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-        .addGroup(layout.createSequentialGroup()
-          .addGap(0, 0, Short.MAX_VALUE)
-          .addComponent(comboHoras, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addGap(10)
-          .addComponent(btnFichar, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addGap(0, 0, Short.MAX_VALUE))
-      .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addComponent(jLabelFichaje)
-        .addComponent(jLabelNombre)
-        .addComponent(jLabel1)
-        .addComponent(jLabelNumero)
-        .addComponent(jPanel2))
-    );
-    layout.setVerticalGroup(
-      layout.createSequentialGroup()
-        .addComponent(jLabel1)
-        .addComponent(jPanel2)
-        .addComponent(jLabelNombre)
-        .addComponent(jLabelFichaje)
-        .addGap(10)
-        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-          .addComponent(comboHoras, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-          .addComponent(btnFichar, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
-        .addComponent(jLabelNumero)
-        .addGap(0, 0, Short.MAX_VALUE)
-    );
 
-    // Timer para auto-fichar
+    // Inicializar controles del modo test si es necesario DESPUÉS de crear los controles principales
+    if (modoTest) {
+        inicializarModoTest();
+    }
+
+    // Configurar layout después de crear todos los controles
+    configurarLayout();
+
+    // Timer para auto-fichar - IMPORTANTE: 30000ms = 30 segundos
     timerAutoFichar = new javax.swing.Timer(30000, e -> {
-      if (onFichar != null) onFichar.run();
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Timer auto-fichar ejecutándose después de 30 segundos...");
+      if (onFichar != null) {
+        try {
+          com.fichajespi.fichajespidestopapp.tools.Logger.debug("Ejecutando auto-fichar...");
+          onFichar.run();
+        } catch (Exception ex) {
+          com.fichajespi.fichajespidestopapp.tools.Logger.error("Error en auto-fichar: " + ex.getMessage());
+          ex.printStackTrace();
+          // Mantener selector visible en caso de error
+        }
+      } else {
+        com.fichajespi.fichajespidestopapp.tools.Logger.warning("onFichar es null, no se puede ejecutar auto-fichar");
+      }
     });
-    timerAutoFichar.setRepeats(false);
+    timerAutoFichar.setRepeats(false); // Solo ejecutar una vez
+    timerAutoFichar.setCoalesce(true);  // Evitar múltiples eventos
   }
 
   // Permite a CardReader registrar el callback para el botón de simular fichaje
   public void setOnSimularFichaje(Runnable r) {
     this.onSimularFichaje = r;
+  }
+
+  /**
+   * Inicializa los controles específicos del modo test
+   */
+  private void inicializarModoTest() {
+    // Crear campo de texto para usuario
+    txtUsuarioTest = new javax.swing.JTextField();
+    txtUsuarioTest.setFont(new java.awt.Font("sansserif", 0, 18));
+    txtUsuarioTest.setText("Introduce ID usuario");
+    txtUsuarioTest.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    txtUsuarioTest.setForeground(new java.awt.Color(128, 128, 128));
+    
+    // Limpiar placeholder al hacer click
+    txtUsuarioTest.addFocusListener(new java.awt.event.FocusAdapter() {
+      @Override
+      public void focusGained(java.awt.event.FocusEvent evt) {
+        if (txtUsuarioTest.getText().equals("Introduce ID usuario")) {
+          txtUsuarioTest.setText("");
+          txtUsuarioTest.setForeground(new java.awt.Color(0, 0, 0));
+        }
+      }
+      
+      @Override
+      public void focusLost(java.awt.event.FocusEvent evt) {
+        if (txtUsuarioTest.getText().trim().isEmpty()) {
+          txtUsuarioTest.setText("Introduce ID usuario");
+          txtUsuarioTest.setForeground(new java.awt.Color(128, 128, 128));
+        }
+      }
+    });
+    
+    // Crear botón para simular fichaje
+    btnSimularFichaje = new javax.swing.JButton("Simular Fichaje");
+    btnSimularFichaje.setFont(new java.awt.Font("sansserif", 1, 18));
+    btnSimularFichaje.addActionListener(e -> {
+      if (isUsuarioTestValido() && onSimularFichaje != null) {
+        com.fichajespi.fichajespidestopapp.tools.Logger.debug("Simulando fichaje para usuario: " + getUsuarioTest());
+        onSimularFichaje.run();
+      } else {
+        com.fichajespi.fichajespidestopapp.tools.Logger.warning("Usuario no válido para simular fichaje");
+      }
+    });
+    
+    // Añadir al panel pero mantenerlos ocultos inicialmente
+    jPanel1.add(txtUsuarioTest);
+    jPanel1.add(btnSimularFichaje);
+    
+    // En modo test, los controles se manejan mediante ventana emergente, no en la pantalla principal
+    txtUsuarioTest.setVisible(false);
+    btnSimularFichaje.setVisible(false);
+  }
+
+  /**
+   * Actualiza el layout para incluir los controles del modo test
+   */
+  private void configurarLayout() {
+    javax.swing.GroupLayout layout = (javax.swing.GroupLayout) jPanel1.getLayout();
+    jPanel1.add(comboHoras);
+    jPanel1.add(btnFichar);
+    
+    // Configuración del layout horizontal
+    javax.swing.GroupLayout.ParallelGroup horizontalGroup = layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER);
+    
+    // Grupo para selector de horas
+    horizontalGroup.addGroup(layout.createSequentialGroup()
+        .addGap(0, 0, Short.MAX_VALUE)
+        .addComponent(comboHoras, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+        .addGap(10)
+        .addComponent(btnFichar, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+        .addGap(0, 0, Short.MAX_VALUE));
+    
+    // Si está en modo test, añadir controles adicionales
+    if (modoTest && txtUsuarioTest != null && btnSimularFichaje != null) {
+        horizontalGroup.addGroup(layout.createSequentialGroup()
+            .addGap(0, 0, Short.MAX_VALUE)
+            .addComponent(txtUsuarioTest, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(10)
+            .addComponent(btnSimularFichaje, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(0, 0, Short.MAX_VALUE));
+    }
+    
+    // Resto de componentes existentes
+    horizontalGroup.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addComponent(jLabelFichaje)
+        .addComponent(jLabelNombre)
+        .addComponent(jLabel1)
+        .addComponent(jLabelNumero)
+        .addComponent(jPanel2));
+    
+    layout.setHorizontalGroup(horizontalGroup);
+    
+    // Configuración del layout vertical
+    javax.swing.GroupLayout.SequentialGroup verticalGroup = layout.createSequentialGroup()
+        .addComponent(jLabel1)
+        .addComponent(jPanel2)
+        .addComponent(jLabelNombre)
+        .addComponent(jLabelFichaje)
+        .addGap(10);
+    
+    // Si está en modo test, añadir controles del modo test
+    if (modoTest && txtUsuarioTest != null && btnSimularFichaje != null) {
+        verticalGroup.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+            .addComponent(txtUsuarioTest, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(btnSimularFichaje, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE));
+        verticalGroup.addGap(10);
+    }
+    
+    // Añadir controles de horas
+    verticalGroup.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+        .addComponent(comboHoras, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+        .addComponent(btnFichar, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE));
+    
+    verticalGroup.addComponent(jLabelNumero)
+        .addGap(0, 0, Short.MAX_VALUE);
+    
+    layout.setVerticalGroup(verticalGroup);
+  }
+
+  /**
+   * Métodos para el modo test
+   */
+  public void mostrarControlesTest() {
+    if (modoTest && txtUsuarioTest != null && btnSimularFichaje != null) {
+      txtUsuarioTest.setVisible(true);
+      btnSimularFichaje.setVisible(true);
+      jLabelFichaje.setText("Modo Test - Introduce usuario");
+    }
+  }
+
+  public void ocultarControlesTest() {
+    if (txtUsuarioTest != null && btnSimularFichaje != null) {
+      txtUsuarioTest.setVisible(false);
+      btnSimularFichaje.setVisible(false);
+    }
+  }
+
+  public boolean isUsuarioTestValido() {
+    return modoTest && txtUsuarioTest != null && 
+           !txtUsuarioTest.getText().trim().isEmpty() &&
+           !txtUsuarioTest.getText().equals("Introduce ID usuario");
+  }
+
+  public String getUsuarioTest() {
+    if (txtUsuarioTest != null && !txtUsuarioTest.getText().isEmpty() &&
+        !txtUsuarioTest.getText().equals("Introduce ID usuario")) {
+      return txtUsuarioTest.getText().trim();
+    }
+    return "";
   }
 
   /**
@@ -126,7 +268,7 @@ public class MainWindow extends javax.swing.JFrame {
         return new Dimension(width, height);
       }
     } catch (NumberFormatException e) {
-      System.err.println("[ERROR] Formato de resolución inválido: " + resolutionString);
+      com.fichajespi.fichajespidestopapp.tools.Logger.error("Formato de resolución inválido: " + resolutionString);
     }
     return null;
   }
@@ -321,21 +463,21 @@ public class MainWindow extends javax.swing.JFrame {
         Dimension customSize = null;
         
         for (int i = 0; i < args.length; i++) {
-          if ("test".equalsIgnoreCase(args[i])) {
+          if ("--test".equalsIgnoreCase(args[i])) {
             modoTest = true;
           }
           if ("--resolution".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
             customSize = parseResolution(args[i + 1]);
             if (customSize != null) {
-              System.out.println("[INFO] Resolución personalizada aplicada: " + customSize.width + "x" + customSize.height);
+              com.fichajespi.fichajespidestopapp.tools.Logger.info("Resolución personalizada aplicada: " + customSize.width + "x" + customSize.height);
             } else {
-              System.err.println("[ERROR] Formato de resolución inválido. Use: --resolution 1024x768");
+              com.fichajespi.fichajespidestopapp.tools.Logger.error("Formato de resolución inválido. Use: --resolution 1024x768");
             }
           }
         }
         
         String backendUrl = BackendConfig.getBackendUrl(args);
-        System.out.println("[INFO] Backend URL utilizada: " + backendUrl);
+        com.fichajespi.fichajespidestopapp.tools.Logger.info("Backend URL utilizada: " + backendUrl);
         
         MainWindow mw = new MainWindow(modoTest, customSize);
         mw.setVisible(true);
@@ -363,10 +505,16 @@ public class MainWindow extends javax.swing.JFrame {
 
   public void changeNombre(String nombre) {
     jLabelNombre.setText(nombre);
+    // Mantener ventana en primer plano cuando se actualiza el nombre (lectura de tarjeta)
+    toFront();
+    requestFocus();
   }
 
   public void changeFichaje(String fichaje) {
     jLabelFichaje.setText(fichaje);
+    // Mantener ventana en primer plano cuando se actualiza el estado del fichaje
+    toFront();
+    requestFocus();
   }
 
   public void changeNumero(String numero) {
@@ -374,27 +522,91 @@ public class MainWindow extends javax.swing.JFrame {
   }
 
   public void resetScreen() {
+    com.fichajespi.fichajespidestopapp.tools.Logger.debug("Reseteando pantalla");
     jLabelNombre.setText("Esperando...");
     jLabelFichaje.setText("Acerque su tarjeta...");
     jLabelNumero.setText("");
-    comboHoras.setVisible(false);
-    btnFichar.setVisible(false);
-    timerAutoFichar.stop();
+    
+    // Ocultar controles con logging
+    if (comboHoras.isVisible()) {
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Ocultando selector de horas");
+      comboHoras.setVisible(false);
+      btnFichar.setVisible(false);
+    }
+    
+    if (timerAutoFichar.isRunning()) {
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Deteniendo timer auto-fichar");
+      timerAutoFichar.stop();
+    }
+    
+    // Permitir lectura de tarjeta cuando volvemos a la pantalla principal
+    setPermitirLecturaTarjeta(true);
+    
+    // Mantener la ventana siempre en primer plano
+    toFront();
+    requestFocus();
+    
+    // Si está en modo test, NO mostrar controles del test en la pantalla principal
+    // Los controles del test se manejan mediante ventana emergente
   }
 
   // Mostrar selector de horas y botón solo para fichaje de entrada
   public void mostrarSelectorHoras(Runnable onFichar) {
+    com.fichajespi.fichajespidestopapp.tools.Logger.debug("Mostrando selector de horas");
+    
+    // Bloquear lectura de tarjeta mientras se seleccionan horas
+    setPermitirLecturaTarjeta(false);
+    
+    // PRIMERO: Mantener ventana en primer plano ANTES de cambiar la interfaz
+    toFront();
+    requestFocus();
+    
     this.onFichar = onFichar;
     comboHoras.setSelectedItem("4.00");
     comboHoras.setVisible(true);
     btnFichar.setVisible(true);
-    timerAutoFichar.restart();
+    
+    // Actualizar texto informativo
+    jLabelFichaje.setText("Seleccione horas y pulse Fichar");
+    
+    // Ocultar controles del modo test si están visibles
+    if (modoTest) {
+      ocultarControlesTest();
+    }
+    
+    // Asegurar que el timer esté completamente detenido antes de reiniciarlo
+    if (timerAutoFichar.isRunning()) {
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Deteniendo timer anterior...");
+      timerAutoFichar.stop();
+    }
+    
+    // Esperar un momento para asegurar que el timer se ha detenido completamente
+    javax.swing.SwingUtilities.invokeLater(() -> {
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Iniciando nuevo timer de 30 segundos...");
+      timerAutoFichar.restart();
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Timer reiniciado. Tiempo de espera: 30 segundos");
+    });
+    
+    // SEGUNDO: Volver a asegurar que está en primer plano después de los cambios
+    javax.swing.SwingUtilities.invokeLater(() -> {
+      toFront();
+      requestFocus();
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Ventana asegurada en primer plano");
+    });
   }
 
   public void ocultarSelectorHoras() {
+    com.fichajespi.fichajespidestopapp.tools.Logger.debug("Ocultando selector de horas");
     comboHoras.setVisible(false);
     btnFichar.setVisible(false);
-    timerAutoFichar.stop();
+    if (timerAutoFichar.isRunning()) {
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Deteniendo timer auto-fichar");
+      timerAutoFichar.stop();
+    }
+    
+    // Mantener ventana en primer plano
+    toFront();
+    requestFocus();
   }
 
   public double getHorasSeleccionadas() {
@@ -408,6 +620,96 @@ public class MainWindow extends javax.swing.JFrame {
       // Ignorar
     }
     return 4.0;
+  }
+
+  /**
+   * Método para verificar si el timer está funcionando correctamente
+   */
+  public boolean isTimerRunning() {
+    return timerAutoFichar != null && timerAutoFichar.isRunning();
+  }
+
+  /**
+   * Control de lectura de tarjeta para evitar lecturas múltiples
+   */
+  public boolean isLecturaTarjetaPermitida() {
+    return permitirLecturaTarjeta;
+  }
+
+  public void setPermitirLecturaTarjeta(boolean permitir) {
+    this.permitirLecturaTarjeta = permitir;
+    com.fichajespi.fichajespidestopapp.tools.Logger.debug("Lectura de tarjeta " + (permitir ? "PERMITIDA" : "BLOQUEADA"));
+  }
+
+  /**
+   * Muestra mensaje de confirmación de entrada con la hora y estimación
+   */
+  public void mostrarConfirmacionEntrada(String horaEntrada, double horasEstimadas) {
+    com.fichajespi.fichajespidestopapp.tools.Logger.debug("Mostrando confirmación de entrada");
+    
+    // Bloquear lectura de tarjeta durante la confirmación
+    setPermitirLecturaTarjeta(false);
+    
+    // Ocultar selector de horas primero
+    comboHoras.setVisible(false);
+    btnFichar.setVisible(false);
+    
+    // Detener timer si está corriendo
+    if (timerAutoFichar.isRunning()) {
+      timerAutoFichar.stop();
+    }
+    
+    // Actualizar textos de confirmación
+    jLabelFichaje.setText("ENTRADA REGISTRADA");
+    jLabelNumero.setText(String.format("Hora: %s - Estimación: %.2f horas", horaEntrada, horasEstimadas));
+    
+    // Mantener ventana en primer plano
+    toFront();
+    requestFocus();
+    
+    // Crear timer para volver a la pantalla principal después de 6 segundos
+    javax.swing.Timer timerConfirmacion = new javax.swing.Timer(6000, e -> {
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Finalizando confirmación de entrada, volviendo a pantalla principal");
+      resetScreen();
+    });
+    timerConfirmacion.setRepeats(false);
+    timerConfirmacion.start();
+    
+    com.fichajespi.fichajespidestopapp.tools.Logger.debug("Confirmación mostrada por 6 segundos");
+  }
+
+  public void mostrarConfirmacionSalida() {
+    com.fichajespi.fichajespidestopapp.tools.Logger.debug("Mostrando confirmación de salida");
+    
+    // Bloquear lectura de tarjeta durante la confirmación
+    setPermitirLecturaTarjeta(false);
+    
+    // Ocultar selector de horas
+    comboHoras.setVisible(false);
+    btnFichar.setVisible(false);
+    
+    // Detener timer si está corriendo
+    if (timerAutoFichar.isRunning()) {
+      timerAutoFichar.stop();
+    }
+    
+    // Actualizar textos de confirmación
+    jLabelFichaje.setText("SALIDA REGISTRADA");
+    jLabelNumero.setText("¡Hasta la próxima!");
+    
+    // Mantener ventana en primer plano
+    toFront();
+    requestFocus();
+    
+    // Crear timer para volver a la pantalla principal después de 6 segundos
+    javax.swing.Timer timerConfirmacion = new javax.swing.Timer(6000, e -> {
+      com.fichajespi.fichajespidestopapp.tools.Logger.debug("Finalizando confirmación de salida, volviendo a pantalla principal");
+      resetScreen();
+    });
+    timerConfirmacion.setRepeats(false);
+    timerConfirmacion.start();
+    
+    com.fichajespi.fichajespidestopapp.tools.Logger.debug("Confirmación de salida mostrada por 6 segundos");
   }
 
   // Variables declaration - do not modify//GEN-BEGIN:variables

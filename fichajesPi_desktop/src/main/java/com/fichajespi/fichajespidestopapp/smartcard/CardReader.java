@@ -10,6 +10,7 @@ import com.fichajespi.fichajespidestopapp.entity.Fichaje;
 import com.fichajespi.fichajespidestopapp.httpClient.RequestSender;
 import com.fichajespi.fichajespidestopapp.httpClient.EstimacionFeignController;
 import com.fichajespi.fichajespidestopapp.entity.EstimacionHoras;
+import com.fichajespi.fichajespidestopapp.tools.Logger;
 import feign.Feign;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
@@ -58,7 +59,20 @@ public class CardReader extends Thread {
     this.instance = instance;
     this.rs = new RequestSender(this.backendUrl = backendUrl != null ? backendUrl : "http://localhost:8080");
     this.testMode = testMode;
+    
+    // Registrar callback para modo test
     if (testMode) {
+      instance.setOnSimularFichaje(() -> {
+        String usuarioTest = instance.getUsuarioTest();
+        if (!usuarioTest.isEmpty()) {
+          Logger.debug("Ejecutando fichaje de test para usuario: " + usuarioTest);
+          try {
+            fichar(usuarioTest);
+          } catch (Exception e) {
+            Logger.error("Error en fichaje de test: " + e.getMessage());
+          }
+        }
+      });
       SwingUtilities.invokeLater(this::mostrarFormularioTest);
     }
   }
@@ -71,6 +85,12 @@ public class CardReader extends Thread {
     }
     while (true) {
       try {
+        // Verificar si está permitida la lectura de tarjeta
+        if (!instance.isLecturaTarjetaPermitida()) {
+          Thread.sleep(500); // Esperar 500ms antes de volver a verificar
+          continue;
+        }
+        
         // Display the list of terminals
         TerminalFactory factory = TerminalFactory.getDefault();
         List<CardTerminal> terminals = factory.terminals().list();
@@ -104,7 +124,7 @@ public class CardReader extends Thread {
           } else {
             //System.out.println("UID: " + bin2hex(response.getData()));
             BigInteger decimal = new BigInteger(bin2hex(response.getData()), 16);
-            System.out.println(decimal);
+            Logger.info("ID de tarjeta detectado: " + decimal);
             fichar(decimal.toString());
             // Disconnect the card
             card.disconnect(false);
@@ -174,7 +194,7 @@ public class CardReader extends Thread {
     // En ambos modos, el origen será 'tarjeta' para que el backend lo registre igual
     fichaje = rs.sendRequest(number, "tarjeta");
     if (fichaje != null) {
-      System.out.println("Fichaje OK");
+      Logger.info("Fichaje realizado correctamente");
       instance.changeNumero(number);
       instance.changeNombre(fichaje.getNombreUsuario());
       StringBuilder builder = new StringBuilder();
@@ -199,12 +219,12 @@ public class CardReader extends Thread {
               if (usuario != null && usuario.id != null) {
                 enviarEstimacionYFinalizar(number, usuario.id, instance.getHorasSeleccionadas());
               } else {
-                System.err.println("No se pudo obtener usuarioId para la estimación (modo test)");
+                Logger.warning("No se pudo obtener usuarioId para la estimación (modo test)");
                 instance.ocultarSelectorHoras();
                 instance.resetScreen();
               }
             } catch (Exception e) {
-              System.err.println("Error consultando usuarioId: " + e.getMessage());
+              Logger.error("Error consultando usuarioId: " + e.getMessage());
               instance.ocultarSelectorHoras();
               instance.resetScreen();
             }
@@ -218,26 +238,27 @@ public class CardReader extends Thread {
             if (usuarioId != null) {
               enviarEstimacionYFinalizar(number, usuarioId, instance.getHorasSeleccionadas());
             } else {
-              System.err.println("No se pudo obtener usuarioId para la estimación");
+              Logger.warning("No se pudo obtener usuarioId para la estimación");
               instance.ocultarSelectorHoras();
               instance.resetScreen();
             }
           }
         });
       } else {
-        CardReader.sleep(3000);
-        instance.resetScreen();
+        // Fichaje de SALIDA - mostrar confirmación
+        Logger.debug("Mostrando confirmación de salida");
+        instance.mostrarConfirmacionSalida();
       }
     } else {
       instance.changeNumero(number + " no existe");
-      CardReader.sleep(5000);
+      CardReader.sleep(6000);
       instance.resetScreen();
     }
   }
 
   private void enviarEstimacionYFinalizar(String numero, Long usuarioId, double horas) {
     try {
-      System.out.println("[DEBUG] Valor de horas seleccionadas: " + horas);
+      Logger.debug("Valor de horas seleccionadas: " + horas);
       // Enviar estimación al backend
       // Gson personalizado para serializar LocalDateTime como ISO-8601
       com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
@@ -250,17 +271,30 @@ public class CardReader extends Thread {
         .create();
       EstimacionHoras estimacion = new EstimacionHoras(usuarioId, horas, java.time.LocalDateTime.now());
       String jsonEstimacion = gson.toJson(estimacion);
-      System.out.println("[DEBUG] JSON enviado al backend: " + jsonEstimacion);
+      Logger.debug("JSON enviado al backend: " + jsonEstimacion);
       EstimacionFeignController estimacionClient = Feign.builder()
         .encoder(new GsonEncoder(gson))
         .decoder(new GsonDecoder(gson))
         .target(EstimacionFeignController.class, backendUrl);
       estimacionClient.crearEstimacion(estimacion);
+      
+      // Mostrar confirmación con la hora actual y la estimación
+      LocalTime horaActual = LocalTime.now();
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+      String horaFormateada = horaActual.format(formatter);
+      
+      Logger.debug("Mostrando confirmación de entrada: " + horaFormateada + " - " + horas + " horas");
+      instance.mostrarConfirmacionEntrada(horaFormateada, horas);
+      
     } catch (Exception ex) {
-      System.err.println("Error enviando estimación: " + ex.getMessage());
+      Logger.error("Error enviando estimación: " + ex.getMessage());
+      // En caso de error, también mostrar confirmación pero indicando error
+      LocalTime horaActual = LocalTime.now();
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+      String horaFormateada = horaActual.format(formatter);
+      instance.mostrarConfirmacionEntrada(horaFormateada, horas);
     }
-    instance.ocultarSelectorHoras();
-    instance.resetScreen();
+    // No llamar directamente a resetScreen aquí, lo hará el timer de confirmación
   }
 
   private String bin2hex(byte[] data) {

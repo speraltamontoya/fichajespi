@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface EstimacionDto {
-  usuarioId: number;
+  usuarioId: string;  // Referencia al campo 'numero' de usuarios
   horasEstimadas: number;
   fecha: string;
 }

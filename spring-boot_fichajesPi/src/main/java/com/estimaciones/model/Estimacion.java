@@ -11,7 +11,7 @@ public class Estimacion {
     private Long id;
 
     @Column(name = "usuario_id", nullable = false)
-    private Long usuarioId;
+    private String usuarioId;  // Referencia al campo 'numero' de usuarios, no al 'id'
 
     @Column(name = "horas_estimadas", nullable = false)
     private Double horasEstimadas;
@@ -23,8 +23,8 @@ public class Estimacion {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getUsuarioId() { return usuarioId; }
-    public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
+    public String getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(String usuarioId) { this.usuarioId = usuarioId; }
 
     public Double getHorasEstimadas() { return horasEstimadas; }
     public void setHorasEstimadas(Double horasEstimadas) { this.horasEstimadas = horasEstimadas; }

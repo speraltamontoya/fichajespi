@@ -3,23 +3,23 @@ package com.fichajespi.fichajespidestopapp.entity;
 import java.time.LocalDateTime;
 
 public class EstimacionHoras {
-    private Long usuarioId;
+    private String usuarioId;  // Referencia al número de usuario, no al ID
     private Double horasEstimadas;
     private LocalDateTime fecha;
 
     public EstimacionHoras() {}
 
-    public EstimacionHoras(Long usuarioId, Double horasEstimadas, LocalDateTime fecha) {
+    public EstimacionHoras(String usuarioId, Double horasEstimadas, LocalDateTime fecha) {
         this.usuarioId = usuarioId;
         this.horasEstimadas = horasEstimadas;
         this.fecha = fecha;
     }
 
-    public Long getUsuarioId() {
+    public String getUsuarioId() {
         return usuarioId;
     }
 
-    public void setUsuarioId(Long usuarioId) {
+    public void setUsuarioId(String usuarioId) {
         this.usuarioId = usuarioId;
     }
 

@@ -68,14 +68,26 @@ export class HomeComponent implements OnInit {
   fichar(): void {
     // Si el usuario está fuera (próximo fichaje es entrada), enviar estimación
     if (!this.model.working) {
-      if (typeof this.model.id !== 'number' || this.model.id === null) {
-        Popup.toastDanger('Error', 'No se ha podido identificar el usuario. Intenta recargar la página.');
+      if (typeof this.model.numero !== 'string' || this.model.numero === null) {
+        Popup.toastDanger('Error', 'No se ha podido identificar el número de usuario. Intenta recargar la página.');
         return;
       }
+      
+      // Crear fecha en zona horaria local para consistencia con backend
+      const now = new Date();
+      // Formatear como LocalDateTime de Java (sin timezone)
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      
       const estimacion: EstimacionDto = {
-        usuarioId: this.model.id,
+        usuarioId: this.model.numero,  // Enviar número de usuario, no ID
         horasEstimadas: this.horasEstimadas || 4,
-        fecha: new Date().toISOString()
+        fecha: localDateTime
       };
       this.estimacionesService.crearEstimacion(estimacion).subscribe({
         next: () => {

@@ -1,7 +1,9 @@
 package com.fichajespi;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.annotation.PostConstruct;
 
@@ -37,11 +39,10 @@ public class Application {
 
 	@PostConstruct
 	public void init() {
-//		TimeZone.setDefault(TimeZone.getTimeZone("Europe/Madrid")); // It will
-//																	// set UTC
-//																	// timezone
-//		System.out.println("Spring boot application running in UTC timezone :"
-//				+ new Date()); // It will print UTC timezone
+		// Configurar zona horaria por defecto para toda la aplicación
+		TimeZone.setDefault(TimeZone.getTimeZone("Europe/Madrid"));
+		System.out.println("Spring boot application running in Europe/Madrid timezone :"
+				+ new Date());
 
 		/*
 		 * Crear los roles si es la primera vez que se ejecuta la app y la tabla no

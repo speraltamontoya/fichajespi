@@ -217,7 +217,7 @@ public class CardReader extends Thread {
                 .target(UsuarioFeignController.class, backendUrl);
               UsuarioResponse usuario = usuarioClient.getIdByNumero(fichaje.getNumeroUsuario());
               if (usuario != null && usuario.id != null) {
-                enviarEstimacionYFinalizar(number, usuario.id, instance.getHorasSeleccionadas());
+                enviarEstimacionYFinalizar(number, fichaje.getNumeroUsuario(), instance.getHorasSeleccionadas());
               } else {
                 Logger.warning("No se pudo obtener usuarioId para la estimación (modo test)");
                 instance.ocultarSelectorHoras();
@@ -229,13 +229,8 @@ public class CardReader extends Thread {
               instance.resetScreen();
             }
           } else {
-            Long usuarioId = null;
-            try {
-              usuarioId = Long.parseLong(fichaje.getNumeroUsuario());
-            } catch (Exception e) {
-              usuarioId = null;
-            }
-            if (usuarioId != null) {
+            String usuarioId = fichaje.getNumeroUsuario();
+            if (usuarioId != null && !usuarioId.trim().isEmpty()) {
               enviarEstimacionYFinalizar(number, usuarioId, instance.getHorasSeleccionadas());
             } else {
               Logger.warning("No se pudo obtener usuarioId para la estimación");
@@ -256,7 +251,7 @@ public class CardReader extends Thread {
     }
   }
 
-  private void enviarEstimacionYFinalizar(String numero, Long usuarioId, double horas) {
+  private void enviarEstimacionYFinalizar(String numero, String usuarioId, double horas) {
     try {
       Logger.debug("Valor de horas seleccionadas: " + horas);
       // Enviar estimación al backend

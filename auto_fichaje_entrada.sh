@@ -50,7 +50,8 @@ get_current_date() {
 time_to_minutes() {
     local time="$1"
     IFS=':' read -r hours minutes seconds <<< "$time"
-    echo $((hours * 60 + minutes))
+    # Forzar interpretación decimal para evitar problemas con números octales (08, 09)
+    echo $(((10#$hours) * 60 + (10#$minutes)))
 }
 
 # Función para convertir minutos desde medianoche a formato HH:MM:SS

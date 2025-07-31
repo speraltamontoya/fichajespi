@@ -58,7 +58,11 @@ minutes_to_time() {
     local total_minutes="$1"
     local hours=$((total_minutes / 60))
     local minutes=$((total_minutes % 60))
-    printf "%02d:%02d:00" "$hours" "$minutes"
+    
+    # Generar segundos aleatorios entre 0 y 59 para mayor realismo
+    local seconds=$((RANDOM % 60))
+    
+    printf "%02d:%02d:%02d" "$hours" "$minutes" "$seconds"
 }
 
 # Función para generar número aleatorio entre min y max
@@ -281,6 +285,10 @@ insert_estimation() {
     local user_numero="$1"
     local fecha="$2"  # formato YYYY-MM-DD
     local horas_estimadas="$3"
+    local hora_fichaje="$4"  # formato HH:MM:SS - hora del fichaje de entrada
+    
+    # Crear datetime completo para la estimación (mismo que el fichaje)
+    local datetime_estimacion="$fecha $hora_fichaje"
     
     # Verificar si ya existe una estimación para este usuario y fecha
     local existing_estimation=$(TZ=UTC mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASSWORD" -D"$DB_NAME" -se "
@@ -292,23 +300,23 @@ insert_estimation() {
     if [[ $existing_estimation -gt 0 ]]; then
         log_message "INFO" "Ya existe estimación para usuario $user_numero en $fecha. Actualizando." "$LOG_FILE"
         
-        # Actualizar estimación existente
+        # Actualizar estimación existente con la hora del fichaje
         TZ=UTC mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASSWORD" -D"$DB_NAME" -e "
             UPDATE estimaciones 
-            SET horas_estimadas = $horas_estimadas, fecha = NOW()
+            SET horas_estimadas = $horas_estimadas, fecha = '$datetime_estimacion'
             WHERE usuario_id = '$user_numero' 
             AND DATE(fecha) = '$fecha';
         "
     else
-        # Insertar nueva estimación usando el numero del usuario
+        # Insertar nueva estimación usando la hora específica del fichaje
         TZ=UTC mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASSWORD" -D"$DB_NAME" -e "
             INSERT INTO estimaciones (usuario_id, horas_estimadas, fecha)
-            VALUES ('$user_numero', $horas_estimadas, NOW());
+            VALUES ('$user_numero', $horas_estimadas, '$datetime_estimacion');
         "
     fi
     
     if [[ $? -eq 0 ]]; then
-        log_message "INFO" "Estimación insertada/actualizada para usuario $user_numero: $horas_estimadas horas" "$LOG_FILE"
+        log_message "INFO" "Estimación insertada/actualizada para usuario $user_numero: $horas_estimadas horas a las $hora_fichaje UTC" "$LOG_FILE"
         return 0
     else
         log_message "ERROR" "No se pudo insertar estimación para usuario $user_numero" "$LOG_FILE"
@@ -361,8 +369,8 @@ insert_fichaje_entrada() {
         local horas_estimadas=$(calculate_estimated_hours "$user_numero" "$dia_semana")
         
         if [[ $(echo "$horas_estimadas > 0" | bc -l) -eq 1 ]]; then
-            insert_estimation "$user_numero" "$fecha" "$horas_estimadas"
-            log_message "INFO" "Estimación calculada para $user_numero: $horas_estimadas horas" "$LOG_FILE"
+            insert_estimation "$user_numero" "$fecha" "$horas_estimadas" "$hora"
+            log_message "INFO" "Estimación calculada para $user_numero: $horas_estimadas horas a las $hora UTC" "$LOG_FILE"
         else
             log_message "WARNING" "No se pudieron calcular horas estimadas para $user_numero" "$LOG_FILE"
         fi

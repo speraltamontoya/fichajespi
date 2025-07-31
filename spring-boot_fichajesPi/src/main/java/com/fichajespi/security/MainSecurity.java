@@ -80,6 +80,7 @@ public class MainSecurity extends WebSecurityConfigurerAdapter {
 				.authorizeRequests()
 				.antMatchers("/calendario/**").hasRole(RRHH)
 				.antMatchers("/dia/**").hasRole(RRHH)
+				.antMatchers("/horarios/**").hasRole(RRHH)
 				.antMatchers("/fichaje/now").permitAll()
 				.antMatchers("/api/estimaciones", "/api/estimaciones/").permitAll()
 				.antMatchers("/public/usuario/id/**").permitAll()

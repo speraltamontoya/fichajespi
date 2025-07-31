@@ -10,6 +10,7 @@ export class MenuComponent implements OnInit {
 
 
   isAdmin: boolean = false;
+  isRRHH: boolean = false;
   numero:string='';
 
 
@@ -19,6 +20,7 @@ export class MenuComponent implements OnInit {
 
   ngOnInit(): void {
     this.isAdmin = this.service.isAdmin();
+    this.isRRHH = this.service.isRRHH();
     this.numero = this.service.getNumero();
   }
 

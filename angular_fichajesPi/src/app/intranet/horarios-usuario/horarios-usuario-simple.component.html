@@ -1,0 +1,59 @@
+<!-- Template simplificado para prueba -->
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title">
+            <i class="fas fa-clock mr-2"></i>
+            Gestión de Horarios de Usuario
+          </h5>
+        </div>
+        <div class="card-body">
+          
+          <!-- Debug básico -->
+          <div class="alert alert-info mb-3">
+            <p><strong>Debug info:</strong></p>
+            <p>Usuarios cargados: {{ usuarios.length }}</p>
+            <p>Usuario seleccionado: {{ usuarioSeleccionado }}</p>
+            <div *ngIf="usuarios.length > 0">
+              <p>Primer usuario: {{ usuarios[0].nombreEmpleado }} (ID: {{ usuarios[0].id }})</p>
+            </div>
+          </div>
+          
+          <!-- Lista de usuarios como divs para ver si los datos están -->
+          <div class="mb-3">
+            <h6>Usuarios disponibles (como divs):</h6>
+            <div *ngFor="let usuario of usuarios; let i = index" class="border p-2 mb-1">
+              {{ i + 1 }}. {{ usuario.nombreEmpleado }} ({{ usuario.numero }}) - ID: {{ usuario.id }}
+            </div>
+          </div>
+          
+          <!-- SELECT SIMPLIFICADO -->
+          <div class="mb-3">
+            <label for="usuarioSelect" class="form-label">Seleccionar Usuario:</label>
+            <select 
+              id="usuarioSelect"
+              class="form-select"
+              [value]="usuarioSeleccionado"
+              (change)="onUsuarioChange($event)"
+              name="usuarioSelect">
+              <option value="">-- Seleccione un usuario --</option>
+              <option 
+                *ngFor="let usuario of usuarios" 
+                [value]="usuario.id"
+                [selected]="usuarioSeleccionado == usuario.id">
+                {{ usuario.nombreEmpleado }} ({{ usuario.numero }})
+              </option>
+            </select>
+          </div>
+          
+          <div *ngIf="usuarioSeleccionado" class="alert alert-success">
+            Usuario seleccionado ID: {{ usuarioSeleccionado }}
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

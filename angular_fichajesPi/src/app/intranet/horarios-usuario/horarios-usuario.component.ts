@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
-import { HorarioUsuarioService, HorarioUsuario, DiaSemana, TurnoDTO } from '../../shared/services/horario-usuario.service';
+import { HorarioUsuarioService, HorarioUsuario, DiaSemana, TurnoDTO, Timezone } from '../../shared/services/horario-usuario.service';
 import { EmpleadosService } from '../empleados/service/empleados.service';
 import { EmpleadoDto } from '../empleados/model/empleadoDto';
 
@@ -13,10 +13,12 @@ export class HorariosUsuarioComponent implements OnInit {
   
   usuarios: any[] = [];
   diasSemana: DiaSemana[] = [];
+  timezones: Timezone[] = [];
   horarios: HorarioUsuario[] = [];
   
   usuarioSeleccionado: string | null = null;
   diaSeleccionado: number | null = null;
+  timezoneSeleccionado: string = 'Europe/Madrid'; // Default timezone
   
   horarioForm: FormGroup;
   isLoading = false;
@@ -36,6 +38,7 @@ export class HorariosUsuarioComponent implements OnInit {
   ngOnInit(): void {
     this.loadUsuarios();
     this.loadDiasSemana();
+    this.loadTimezones();
   }
 
   /**
@@ -110,6 +113,21 @@ export class HorariosUsuarioComponent implements OnInit {
   }
 
   /**
+   * Cargar zonas horarias disponibles
+   */
+  loadTimezones(): void {
+    this.horarioService.getTimezones().subscribe({
+      next: (timezones: Timezone[]) => {
+        this.timezones = timezones;
+        this.cdr.markForCheck();
+      },
+      error: (error: any) => {
+        console.error('Error al cargar zonas horarias:', error);
+      }
+    });
+  }
+
+  /**
    * Seleccionar día de la semana
    */
   onDiaSeleccionado(event: Event): void {
@@ -169,6 +187,11 @@ export class HorariosUsuarioComponent implements OnInit {
    */
   setupFormConHorarios(horarios: HorarioUsuario[]): void {
     const turnosArray = this.fb.array([]);
+    
+    // Si hay horarios, usar el timezone del primer horario
+    if (horarios.length > 0 && horarios[0].timezone) {
+      this.timezoneSeleccionado = horarios[0].timezone;
+    }
     
     horarios.forEach(horario => {
       turnosArray.push(this.fb.group({
@@ -253,7 +276,8 @@ export class HorariosUsuarioComponent implements OnInit {
     const createUpdateDTO = {
       usuarioId: usuarioId,
       diaSemana: this.diaSeleccionado,
-      turnos: turnos
+      turnos: turnos,
+      timezone: this.timezoneSeleccionado
     };
 
     this.isLoading = true;
@@ -307,6 +331,7 @@ export class HorariosUsuarioComponent implements OnInit {
     this.horarioForm.reset();
     this.setupFormVacio();
     this.isEditMode = false;
+    this.timezoneSeleccionado = 'Europe/Madrid'; // Reset a timezone por defecto
   }
 
   /**
@@ -316,6 +341,14 @@ export class HorariosUsuarioComponent implements OnInit {
     if (diaSemana === null) return '';
     const dia = this.diasSemana.find(d => d.id === diaSemana);
     return dia ? dia.nombre : 'Desconocido';
+  }
+
+  /**
+   * Obtener descripción del timezone
+   */
+  getTimezoneDescription(timezoneId: string): string {
+    const timezone = this.timezones.find(tz => tz.id === timezoneId);
+    return timezone ? timezone.descripcion : timezoneId;
   }
 
   /**

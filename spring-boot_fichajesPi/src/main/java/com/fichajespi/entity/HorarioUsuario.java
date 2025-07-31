@@ -33,6 +33,9 @@ public class HorarioUsuario {
     @Column(name = "descripcion")
     private String descripcion;
     
+    @Column(name = "timezone", length = 50)
+    private String timezone = "Europe/Madrid";  // Zona horaria por defecto
+    
     // Constructores
     public HorarioUsuario() {}
     
@@ -45,6 +48,19 @@ public class HorarioUsuario {
         this.horaFin = horaFin;
         this.descripcion = descripcion;
         this.activo = true;
+        this.timezone = "Europe/Madrid";  // Default
+    }
+    
+    public HorarioUsuario(Usuario usuario, Integer diaSemana, Integer turnoNumero, 
+                         LocalTime horaInicio, LocalTime horaFin, String descripcion, String timezone) {
+        this.usuario = usuario;
+        this.diaSemana = diaSemana;
+        this.turnoNumero = turnoNumero;
+        this.horaInicio = horaInicio;
+        this.horaFin = horaFin;
+        this.descripcion = descripcion;
+        this.activo = true;
+        this.timezone = timezone != null ? timezone : "Europe/Madrid";
     }
     
     // Getters y Setters
@@ -112,6 +128,14 @@ public class HorarioUsuario {
         this.descripcion = descripcion;
     }
     
+    public String getTimezone() {
+        return timezone;
+    }
+    
+    public void setTimezone(String timezone) {
+        this.timezone = timezone != null ? timezone : "Europe/Madrid";
+    }
+    
     // Métodos utilitarios
     public String getDiaSemanaNombre() {
         switch (diaSemana) {
@@ -136,6 +160,7 @@ public class HorarioUsuario {
                 ", horaFin=" + horaFin +
                 ", activo=" + activo +
                 ", descripcion='" + descripcion + '\'' +
+                ", timezone='" + timezone + '\'' +
                 '}';
     }
 }

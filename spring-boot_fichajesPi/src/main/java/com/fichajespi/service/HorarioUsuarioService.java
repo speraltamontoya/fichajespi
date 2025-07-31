@@ -72,6 +72,7 @@ public class HorarioUsuarioService {
                     horario.setHoraInicio(turnoDTO.getHoraInicio());
                     horario.setHoraFin(turnoDTO.getHoraFin());
                     horario.setDescripcion(turnoDTO.getDescripcion());
+                    horario.setTimezone(createUpdateDTO.getTimezone()); // Añadir timezone
                     horario.setActivo(true);
                     return horario;
                 })
@@ -160,7 +161,8 @@ public class HorarioUsuarioService {
                 horario.getHoraInicio(),
                 horario.getHoraFin(),
                 horario.getActivo(),
-                horario.getDescripcion()
+                horario.getDescripcion(),
+                horario.getTimezone()
         );
     }
     

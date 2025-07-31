@@ -15,6 +15,7 @@ public class HorarioUsuarioDTO {
     private LocalTime horaFin;
     private Boolean activo;
     private String descripcion;
+    private String timezone;
     
     // Constructores
     public HorarioUsuarioDTO() {}
@@ -31,6 +32,23 @@ public class HorarioUsuarioDTO {
         this.horaFin = horaFin;
         this.activo = activo;
         this.descripcion = descripcion;
+        this.timezone = "Europe/Madrid"; // Default
+        this.diaSemanaDescripcion = getDiaSemanaNombre();
+    }
+    
+    public HorarioUsuarioDTO(Long id, Long usuarioId, String usuarioNombre, Integer diaSemana, 
+                           Integer turnoNumero, LocalTime horaInicio, LocalTime horaFin, 
+                           Boolean activo, String descripcion, String timezone) {
+        this.id = id;
+        this.usuarioId = usuarioId;
+        this.usuarioNombre = usuarioNombre;
+        this.diaSemana = diaSemana;
+        this.turnoNumero = turnoNumero;
+        this.horaInicio = horaInicio;
+        this.horaFin = horaFin;
+        this.activo = activo;
+        this.descripcion = descripcion;
+        this.timezone = timezone != null ? timezone : "Europe/Madrid";
         this.diaSemanaDescripcion = getDiaSemanaNombre();
     }
     
@@ -116,6 +134,14 @@ public class HorarioUsuarioDTO {
         this.descripcion = descripcion;
     }
     
+    public String getTimezone() {
+        return timezone;
+    }
+    
+    public void setTimezone(String timezone) {
+        this.timezone = timezone != null ? timezone : "Europe/Madrid";
+    }
+    
     // Método utilitario
     private String getDiaSemanaNombre() {
         if (diaSemana == null) return "";
@@ -136,6 +162,7 @@ public class HorarioUsuarioDTO {
         private Long usuarioId;
         private Integer diaSemana;
         private List<TurnoDTO> turnos;
+        private String timezone;
         
         public static class TurnoDTO {
             private Integer turnoNumero;
@@ -210,6 +237,14 @@ public class HorarioUsuarioDTO {
         
         public void setTurnos(List<TurnoDTO> turnos) {
             this.turnos = turnos;
+        }
+        
+        public String getTimezone() {
+            return timezone;
+        }
+        
+        public void setTimezone(String timezone) {
+            this.timezone = timezone;
         }
     }
 }

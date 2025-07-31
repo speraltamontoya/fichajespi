@@ -14,6 +14,7 @@ export interface HorarioUsuario {
   horaFin: string;
   activo?: boolean;
   descripcion?: string;
+  timezone?: string;
 }
 
 export interface TurnoDTO {
@@ -27,11 +28,18 @@ export interface CreateUpdateHorarioDTO {
   usuarioId: number;
   diaSemana: number;
   turnos: TurnoDTO[];
+  timezone?: string;
 }
 
 export interface DiaSemana {
   id: number;
   nombre: string;
+}
+
+export interface Timezone {
+  id: string;
+  nombre: string;
+  descripcion: string;
 }
 
 @Injectable({
@@ -117,6 +125,29 @@ export class HorarioUsuarioService {
     // Usamos Promise.resolve y convertimos a Observable
     return new Observable<DiaSemana[]>(observer => {
       observer.next(diasSemana);
+      observer.complete();
+    });
+  }
+
+  /**
+   * Obtener zonas horarias disponibles
+   */
+  getTimezones(): Observable<Timezone[]> {
+    const timezones: Timezone[] = [
+      { id: 'Europe/Madrid', nombre: 'Madrid', descripcion: 'Madrid/Barcelona (CET/CEST)' },
+      { id: 'UTC', nombre: 'UTC', descripcion: 'Tiempo Universal Coordinado' },
+      { id: 'Europe/London', nombre: 'Londres', descripcion: 'Londres (GMT/BST)' },
+      { id: 'Europe/Paris', nombre: 'París', descripcion: 'París (CET/CEST)' },
+      { id: 'Europe/Rome', nombre: 'Roma', descripcion: 'Roma (CET/CEST)' },
+      { id: 'Europe/Berlin', nombre: 'Berlín', descripcion: 'Berlín (CET/CEST)' },
+      { id: 'America/New_York', nombre: 'Nueva York', descripcion: 'Nueva York (EST/EDT)' },
+      { id: 'America/Los_Angeles', nombre: 'Los Ángeles', descripcion: 'Los Ángeles (PST/PDT)' },
+      { id: 'America/Mexico_City', nombre: 'Ciudad de México', descripcion: 'Ciudad de México (CST/CDT)' },
+      { id: 'America/Buenos_Aires', nombre: 'Buenos Aires', descripcion: 'Buenos Aires (ART)' }
+    ];
+    
+    return new Observable<Timezone[]>(observer => {
+      observer.next(timezones);
       observer.complete();
     });
   }

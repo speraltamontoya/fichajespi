@@ -13,7 +13,7 @@
           
           <!-- Formulario de selección -->
           <form class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label for="usuarioSelect" class="form-label">
                 <i class="fas fa-user mr-1"></i>
                 Usuario:
@@ -33,7 +33,7 @@
               </select>
             </div>
 
-            <div class="col-md-6" *ngIf="usuarioSeleccionado">
+            <div class="col-md-4" *ngIf="usuarioSeleccionado">
               <label for="dia" class="form-label">
                 <i class="fas fa-calendar mr-1"></i>
                 Día de la Semana:
@@ -52,6 +52,27 @@
                 </option>
               </select>
             </div>
+
+            <div class="col-md-4" *ngIf="usuarioSeleccionado && diaSeleccionado !== null">
+              <label for="timezone" class="form-label">
+                <i class="fas fa-globe mr-1"></i>
+                Zona Horaria:
+              </label>
+              <select 
+                id="timezone"
+                class="form-select"
+                [(ngModel)]="timezoneSeleccionado"
+                name="timezone">
+                <option 
+                  *ngFor="let timezone of timezones" 
+                  [value]="timezone.id">
+                  {{ timezone.nombre }} - {{ timezone.descripcion }}
+                </option>
+              </select>
+              <div class="form-text text-muted mt-1">
+                <small>Los horarios se interpretan en esta zona horaria</small>
+              </div>
+            </div>
           </form>
 
           <!-- Mensaje de selección -->
@@ -62,7 +83,13 @@
 
           <!-- Formulario de horarios -->
           <div *ngIf="usuarioSeleccionado && diaSeleccionado !== null" class="mt-4">
-            <h6>Horarios para {{ getNombreDia(diaSeleccionado) }}</h6>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0">Horarios para {{ getNombreDia(diaSeleccionado) }}</h6>
+              <div class="badge bg-info">
+                <i class="fas fa-globe mr-1"></i>
+                {{ getTimezoneDescription(timezoneSeleccionado) }}
+              </div>
+            </div>
             
             <form [formGroup]="horarioForm" (ngSubmit)="saveHorarios()">
               <div formArrayName="turnos">

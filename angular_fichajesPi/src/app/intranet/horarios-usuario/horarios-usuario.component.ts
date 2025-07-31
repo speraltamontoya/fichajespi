@@ -44,7 +44,6 @@ export class HorariosUsuarioComponent implements OnInit {
   onUsuarioSeleccionado(event: Event): void {
     const target = event.target as HTMLSelectElement;
     const usuarioId = target.value || null;
-    console.log('Usuario seleccionado:', usuarioId);
     this.usuarioSeleccionado = usuarioId;
     this.diaSeleccionado = null;
     this.horarios = [];
@@ -65,8 +64,6 @@ export class HorariosUsuarioComponent implements OnInit {
    * Cargar usuarios disponibles
    */
   loadUsuarios(): void {
-    console.log('🚀 NUEVA VERSIÓN - loadUsuarios iniciando');
-    
     // Crear DTO vacío como antes
     const emptyDto: EmpleadoDto = {
       email: '',
@@ -84,33 +81,14 @@ export class HorariosUsuarioComponent implements OnInit {
     
     this.empleadosService.getElements(emptyDto, 0, 100, 'id', true).subscribe({
       next: (response: any) => {
-        console.log('📥 Respuesta del servicio:', response);
-        
         if (response && response.content && Array.isArray(response.content)) {
-          // ASIGNACIÓN DIRECTA SIN SPREAD
           this.usuarios = response.content;
-          
-          console.log('✅ Usuarios asignados:', this.usuarios);
-          console.log('📋 Primer usuario:', this.usuarios[0]);
-          console.log('📋 Segundo usuario:', this.usuarios[1]);
-          console.log('📋 Longitud:', this.usuarios.length);
-          
-          // Múltiples estrategias de detección
           this.cdr.markForCheck();
           this.cdr.detectChanges();
-          
-          // Verificar en el siguiente ciclo
-          setTimeout(() => {
-            console.log('⏰ Timeout - usuarios.length:', this.usuarios.length);
-            this.cdr.detectChanges();
-          }, 100);
-          
-        } else {
-          console.error('❌ Estructura de respuesta incorrecta:', response);
         }
       },
       error: (error: any) => {
-        console.error('❌ Error al cargar usuarios:', error);
+        console.error('Error al cargar usuarios:', error);
       }
     });
   }
@@ -157,7 +135,6 @@ export class HorariosUsuarioComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error: any) => {
-        console.error('Error cargando horarios:', error);
         console.error('Error al cargar horarios del usuario');
         this.isLoading = false;
       }
@@ -179,7 +156,7 @@ export class HorariosUsuarioComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error: any) => {
-        console.error('Error cargando horarios del día:', error);
+        console.error('Error al cargar horarios del día');
         this.setupFormVacio();
         this.isEditMode = false;
         this.isLoading = false;
@@ -241,8 +218,6 @@ export class HorariosUsuarioComponent implements OnInit {
     if (this.turnos.length > 1) {
       this.turnos.removeAt(index);
       this.actualizarNumerosTurnos();
-    } else {
-      console.warn('Debe mantener al menos un turno');
     }
   }
 
@@ -260,12 +235,10 @@ export class HorariosUsuarioComponent implements OnInit {
    */
   saveHorarios(): void {
     if (!this.usuarioSeleccionado || !this.diaSeleccionado) {
-      console.error('Debe seleccionar usuario y día');
       return;
     }
 
     if (this.horarioForm.invalid) {
-      console.error('Por favor complete todos los campos requeridos');
       return;
     }
 
@@ -286,14 +259,12 @@ export class HorariosUsuarioComponent implements OnInit {
     this.isLoading = true;
     this.horarioService.saveHorariosUsuarioDia(usuarioId, this.diaSeleccionado, createUpdateDTO).subscribe({
       next: (response: any) => {
-        console.log('Horarios guardados correctamente');
         this.loadHorariosUsuario();
         this.loadHorariosDia();
         this.isLoading = false;
       },
       error: (error: any) => {
-        console.error('Error guardando horarios:', error);
-        console.error(error.error?.message || 'Error al guardar horarios');
+        console.error('Error al guardar horarios');
         this.isLoading = false;
       }
     });
@@ -308,7 +279,6 @@ export class HorariosUsuarioComponent implements OnInit {
       
       // Validar que hora inicio sea menor que hora fin
       if (turno.horaInicio >= turno.horaFin) {
-        console.error(`El turno ${turno.turnoNumero}: la hora de inicio debe ser menor que la de fin`);
         return false;
       }
       
@@ -316,7 +286,6 @@ export class HorariosUsuarioComponent implements OnInit {
       for (let j = i + 1; j < turnos.length; j++) {
         const otroTurno = turnos[j];
         if (this.turnosSeSuperponen(turno, otroTurno)) {
-          console.error(`Los turnos ${turno.turnoNumero} y ${otroTurno.turnoNumero} se superponen`);
           return false;
         }
       }

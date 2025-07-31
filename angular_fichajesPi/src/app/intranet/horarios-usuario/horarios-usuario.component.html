@@ -11,16 +11,6 @@
         </div>
         <div class="card-body">
           
-          <!-- DEBUG SIMPLIFICADO -->
-          <div class="alert alert-primary mb-3">
-            <strong>🔍 Estado:</strong> 
-            {{ usuarios?.length || 0 }} usuarios cargados
-            <span *ngIf="usuarios && usuarios.length > 0" style="color: green;"> ✅ OK</span>
-            <span *ngIf="!usuarios || usuarios.length === 0" style="color: red;"> ❌ Vacío</span>
-            <br>
-            <strong>Array completo:</strong> {{ usuarios | json }}
-          </div>
-          
           <!-- Formulario de selección -->
           <form class="row mb-4">
             <div class="col-md-6">
@@ -41,15 +31,6 @@
                   {{ usuario.nombreEmpleado }}
                 </option>
               </select>
-              <small class="text-muted">Opciones: {{ usuarios?.length || 0 }}</small>
-              
-              <!-- DEBUG: Mostrar usuarios explícitamente -->
-              <div style="font-size: 10px; color: blue; margin-top: 5px;">
-                <strong>DEBUG Usuarios:</strong><br>
-                <div *ngFor="let u of usuarios; let i = index">
-                  {{ i + 1 }}. {{ u.nombreEmpleado }} (ID: {{ u.id }}, Num: {{ u.numero }})
-                </div>
-              </div>
             </div>
 
             <div class="col-md-6" *ngIf="usuarioSeleccionado">
@@ -72,16 +53,6 @@
               </select>
             </div>
           </form>
-
-          <!-- Debug info (temporal) -->
-          <div class="alert alert-info mb-3" *ngIf="usuarios.length > 0">
-            <small>
-              <strong>Debug:</strong> 
-              Usuarios: {{ usuarios.length }} | 
-              Seleccionado: {{ usuarioSeleccionado }} | 
-              Día: {{ diaSeleccionado }}
-            </small>
-          </div>
 
           <!-- Mensaje de selección -->
           <div *ngIf="!usuarioSeleccionado" class="alert alert-warning">

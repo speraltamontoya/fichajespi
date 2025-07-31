@@ -20,6 +20,7 @@ import { BotonVolverComponent } from './components/boton-volver/boton-volver.com
 import { ChartComponent } from './components/chart/chart.component';
 import { ChartModule } from 'primeng/chart';
 import { StaticsTableComponent } from './components/statics-table/statics-table.component';
+import { UtcToLocalPipe } from './pipes/utc-to-local.pipe';
 
 
 
@@ -39,7 +40,8 @@ import { StaticsTableComponent } from './components/statics-table/statics-table.
     BotonGuardarComponent,
     BotonVolverComponent,
     ChartComponent,
-    StaticsTableComponent
+    StaticsTableComponent,
+    UtcToLocalPipe
   ],
   imports: [
     CommonModule,
@@ -65,7 +67,8 @@ import { StaticsTableComponent } from './components/statics-table/statics-table.
     BotonGuardarComponent,
     BotonVolverComponent,
     ChartComponent,
-    StaticsTableComponent
+    StaticsTableComponent,
+    UtcToLocalPipe
   ],
   providers: [
   ]

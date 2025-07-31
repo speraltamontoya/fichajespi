@@ -39,9 +39,10 @@ public class Application {
 
 	@PostConstruct
 	public void init() {
-		// Configurar zona horaria por defecto para toda la aplicación
-		TimeZone.setDefault(TimeZone.getTimeZone("Europe/Madrid"));
-		System.out.println("Spring boot application running in Europe/Madrid timezone :"
+		// Configurar zona horaria UTC por defecto para toda la aplicación
+		// Los datos se almacenan en UTC y se convierten al mostrar
+		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+		System.out.println("Spring boot application running in UTC timezone :"
 				+ new Date());
 
 		/*

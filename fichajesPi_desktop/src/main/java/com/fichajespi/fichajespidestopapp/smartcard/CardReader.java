@@ -264,7 +264,8 @@ public class CardReader extends Thread {
           }
         })
         .create();
-      EstimacionHoras estimacion = new EstimacionHoras(usuarioId, horas, java.time.LocalDateTime.now());
+      // Crear estimación con fecha/hora en UTC para consistencia con el backend
+      EstimacionHoras estimacion = new EstimacionHoras(usuarioId, horas, java.time.LocalDateTime.now(java.time.ZoneOffset.UTC));
       String jsonEstimacion = gson.toJson(estimacion);
       Logger.debug("JSON enviado al backend: " + jsonEstimacion);
       EstimacionFeignController estimacionClient = Feign.builder()

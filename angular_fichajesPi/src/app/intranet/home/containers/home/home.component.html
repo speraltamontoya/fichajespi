@@ -13,7 +13,7 @@
       class="bi bi-watch feather"></i> Fichar</button>
   <div class="bg-light rounded p-4">
     <div class="text-center my-3"><b>Número Tarjeta: {{model.numero}}</b></div>
-    <div class="text-center my-3"><b>Último fichaje: </b>{{model.ultimoFichaje}}</div>
+    <div class="text-center my-3"><b>Último fichaje: </b>{{model.ultimoFichaje | utcToLocal:'datetime'}}</div>
     <div class="text-center my-3" *ngIf="model.working"><b>Estado: </b>Trabajando</div>
     <div class="text-center my-3" *ngIf="!model.working"><b>Estado: </b>Fuera del trabajo</div>
     <div class="text-center my-3"><b>Vacaciones restantes: </b>{{model.diasVacaciones}}</div>

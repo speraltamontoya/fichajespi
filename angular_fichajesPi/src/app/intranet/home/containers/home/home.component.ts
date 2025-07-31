@@ -73,21 +73,13 @@ export class HomeComponent implements OnInit {
         return;
       }
       
-      // Crear fecha en zona horaria local para consistencia con backend
-      const now = new Date();
-      // Formatear como LocalDateTime de Java (sin timezone)
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      // Crear fecha en UTC para consistencia con backend usando servicio utilitario
+      const utcDateTime = this.getCurrentUtcString();
       
       const estimacion: EstimacionDto = {
         usuarioId: this.model.numero,  // Enviar número de usuario, no ID
         horasEstimadas: this.horasEstimadas || 4,
-        fecha: localDateTime
+        fecha: utcDateTime
       };
       this.estimacionesService.crearEstimacion(estimacion).subscribe({
         next: () => {
@@ -115,6 +107,20 @@ export class HomeComponent implements OnInit {
         console.log(err)
       }
     );
+  }
+
+  /**
+   * Obtiene la fecha/hora actual en UTC como string
+   */
+  private getCurrentUtcString(): string {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
 }

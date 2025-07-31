@@ -2,6 +2,7 @@ package com.fichajespi.dto.converter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +46,9 @@ public class FichajeDtoConverter {
 
 	public FichajeDtoReqRes fichar(FichajeDtoReqRes fichajeDto) {
 
-		fichajeDto.setHora(LocalTime.now());
-		fichajeDto.setDia(LocalDate.now());
+		// Usar UTC para consistencia global
+		fichajeDto.setHora(LocalTime.now(ZoneOffset.UTC));
+		fichajeDto.setDia(LocalDate.now(ZoneOffset.UTC));
 
 		Fichaje fichaje = transform(fichajeDto);
 
@@ -65,7 +67,7 @@ public class FichajeDtoConverter {
 			sb.append(" ");
 			DateTimeFormatter myTime = DateTimeFormatter.ofPattern("HH:mm:ss");
 			sb.append(myTime.format(fichaje.getHora()));
-			sb.append(" - ");
+			sb.append(" UTC - ");  // Indicar que la hora es UTC
 			sb.append(fichaje.getTipo());
 			usuario.setUltimoFichaje(sb.toString());
 			service.save(usuario);

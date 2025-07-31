@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { GuardService } from '../core/auth/guards/prod-guards.service';
 import { IntranetComponent } from './intranet.component';
+import { HorariosUsuarioComponent } from './horarios-usuario/horarios-usuario.component';
 
 const routes: Routes = [
   {
@@ -29,6 +30,10 @@ const routes: Routes = [
       },
       {
         path: 'vacaciones', loadChildren: () => import('./vacaciones/vacaciones.module').then(m => m.VacacionesModule)
+        , canActivate: [GuardService], data: { expectedRol: ['admin'] }
+      },
+      {
+        path: 'horarios-usuario', component: HorariosUsuarioComponent
         , canActivate: [GuardService], data: { expectedRol: ['admin'] }
       },
       {

@@ -234,7 +234,56 @@ generate_random_entry_time() {
     minutes_to_time $tiempo_aleatorio
 }
 
-# Función para calcular horas estimadas de trabajo para un usuario en un día
+# Función para calcular horas estimadas de trabajo para un turno específico
+calculate_estimated_hours_for_shift() {
+    local user_numero="$1"
+    local dia_semana="$2"
+    local hora_inicio_turno="$3"
+    local turno_numero="$4"
+    
+    # Obtener el horario específico del turno
+    local horario_turno=$(TZ=UTC mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASSWORD" -D"$DB_NAME" -se "
+        SELECT 
+            h.hora_inicio,
+            h.hora_fin
+        FROM horarios_usuario h 
+        INNER JOIN usuarios u ON h.usuario_id = u.id
+        WHERE u.numero = '$user_numero'
+        AND h.dia_semana = $dia_semana 
+        AND h.hora_inicio = '$hora_inicio_turno'
+        AND h.turno_numero = $turno_numero
+        AND h.activo = true
+        LIMIT 1
+    " 2>/dev/null)
+    
+    if [[ -z "$horario_turno" ]]; then
+        echo "0.00"
+        return
+    fi
+    
+    # Procesar el horario del turno específico
+    IFS=$'\t' read -r hora_inicio hora_fin <<< "$horario_turno"
+    
+    if [[ -z "$hora_inicio" ]] || [[ -z "$hora_fin" ]]; then
+        echo "0.00"
+        return
+    fi
+    
+    local inicio_minutos=$(time_to_minutes "$hora_inicio")
+    local fin_minutos=$(time_to_minutes "$hora_fin")
+    local duracion_minutos=$((fin_minutos - inicio_minutos))
+    
+    # Si la hora fin es menor que la de inicio, probablemente cruce medianoche
+    if [[ $duracion_minutos -lt 0 ]]; then
+        duracion_minutos=$((duracion_minutos + 1440))  # Añadir 24 horas
+    fi
+    
+    # Convertir minutos a horas con 2 decimales
+    local horas_estimadas=$(echo "scale=2; $duracion_minutos / 60" | bc -l)
+    echo "$horas_estimadas"
+}
+
+# Función para calcular horas estimadas de trabajo para un usuario en un día (DEPRECIADA - usar calculate_estimated_hours_for_shift)
 calculate_estimated_hours() {
     local user_numero="$1"
     local dia_semana="$2"
@@ -365,15 +414,43 @@ insert_fichaje_entrada() {
         # Actualizar hibernate_sequence
         update_hibernate_sequence $fichaje_id
         
-        # Calcular e insertar estimación de horas para este día
+        # Calcular e insertar estimación de horas SOLO para este turno específico
         local dia_semana=$(get_current_day_of_week)
-        local horas_estimadas=$(calculate_estimated_hours "$user_numero" "$dia_semana")
+        local horas_estimadas
+        
+        # Extraer información del turno desde la descripción o parámetros adicionales
+        local hora_inicio_turno=""
+        local turno_numero=""
+        
+        # Si tenemos parámetros adicionales, usarlos
+        if [[ $# -ge 6 ]]; then
+            hora_inicio_turno="$5"
+            turno_numero="$6"
+        fi
+        
+        if [[ -n "$hora_inicio_turno" ]] && [[ -n "$turno_numero" ]]; then
+            # Usar la nueva función que calcula por turno específico
+            horas_estimadas=$(calculate_estimated_hours_for_shift "$user_numero" "$dia_semana" "$hora_inicio_turno" "$turno_numero")
+            log_message "INFO" "Calculando estimación para turno específico $turno_numero (inicio: $hora_inicio_turno)" "$LOG_FILE"
+        else
+            # Fallback a la función anterior (depreciada)
+            horas_estimadas=$(calculate_estimated_hours "$user_numero" "$dia_semana")
+            log_message "WARNING" "Usando cálculo total de horas (turno no especificado)" "$LOG_FILE"
+        fi
         
         if [[ $(echo "$horas_estimadas > 0" | bc -l) -eq 1 ]]; then
             insert_estimation "$user_numero" "$fecha" "$horas_estimadas" "$hora"
-            log_message "INFO" "Estimación calculada para $user_numero: $horas_estimadas horas a las $hora UTC" "$LOG_FILE"
+            if [[ -n "$turno_numero" ]]; then
+                log_message "INFO" "Estimación calculada para $user_numero turno $turno_numero: $horas_estimadas horas a las $hora UTC" "$LOG_FILE"
+            else
+                log_message "INFO" "Estimación calculada para $user_numero: $horas_estimadas horas a las $hora UTC" "$LOG_FILE"
+            fi
         else
-            log_message "WARNING" "No se pudieron calcular horas estimadas para $user_numero" "$LOG_FILE"
+            if [[ -n "$turno_numero" ]]; then
+                log_message "WARNING" "No se pudieron calcular horas estimadas para $user_numero turno $turno_numero" "$LOG_FILE"
+            else
+                log_message "WARNING" "No se pudieron calcular horas estimadas para $user_numero" "$LOG_FILE"
+            fi
         fi
         
         return 0
@@ -434,7 +511,7 @@ process_upcoming_schedules() {
                 desc_completa="$desc_completa - $descripcion"
             fi
             
-            if insert_fichaje_entrada "$numero" "$fecha_actual" "$hora_fichaje" "$desc_completa"; then
+            if insert_fichaje_entrada "$numero" "$fecha_actual" "$hora_fichaje" "$desc_completa" "$hora_inicio" "$turno_numero"; then
                 ((fichajes_generados++))
                 log_message "SUCCESS" "Fichaje generado para $nombre_empleado - Horario programado: $hora_inicio ($timezone) → $hora_inicio_utc UTC, Fichaje: $hora_fichaje UTC" "$LOG_FILE"
             else
@@ -571,8 +648,8 @@ test_mode() {
     while IFS=$'\t' read -r numero nombre_empleado hora_inicio turno_numero descripcion timezone; do
         [[ -z "$numero" ]] && continue
         
-        # Calcular horas estimadas para este usuario
-        local horas_est=$(calculate_estimated_hours "$numero" "$dia_semana")
+        # Calcular horas estimadas SOLO para este turno específico
+        local horas_est=$(calculate_estimated_hours_for_shift "$numero" "$dia_semana" "$hora_inicio" "$turno_numero")
         
         # Convertir hora local a UTC para mostrar ambas
         local hora_inicio_utc=$(convert_local_to_utc "$hora_inicio" "$timezone" "$fecha_actual")
@@ -582,7 +659,7 @@ test_mode() {
     done <<< "$horarios"
     
     echo ""
-    echo "NOTA: HORARIO muestra formato LOCAL→UTC. HORAS_EST son las horas totales estimadas de trabajo."
+    echo "NOTA: HORARIO muestra formato LOCAL→UTC. HORAS_EST son las horas estimadas POR TURNO INDIVIDUAL."
     
     echo ""
 }

@@ -25,7 +25,7 @@ export class FichajesListaComponent implements OnInit {
   order = 'id'
   asc = false
 
-  listaElementos: Array<any> = []
+  listaElementos: Array<FichajeDto> = []
 
   pag: Pagination = {
     totalPages: [],

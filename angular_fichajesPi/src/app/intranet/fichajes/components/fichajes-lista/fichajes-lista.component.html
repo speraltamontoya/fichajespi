@@ -85,11 +85,11 @@
 
       <!--       <tr routerLink='/intranet/fichajes/list/{{elemento.id}}' *ngFor="let elemento of listaElementos"> -->
       <tr *ngFor="let elemento of listaElementos">
-        <td>{{elemento.dia}}</td>
-        <td>{{elemento.hora}}</td>
+        <td>{{elemento.diaLocal || elemento.dia}}</td>
+        <td>{{elemento.horaLocal || elemento.hora}}</td>
         <td>{{elemento.tipo}}</td>
-        <td>{{elemento.usuario.nombreEmpleado}}</td>
-        <td>{{elemento.usuario.numero}}</td>
+        <td>{{elemento.usuario?.nombreEmpleado}}</td>
+        <td>{{elemento.usuario?.numero}}</td>
         <td>{{elemento.origen}}</td>
         <td *ngIf="isAdmin" routerLink='/intranet/fichajes/list/{{elemento.id}}'><div class="w-100 h-100 btn btn-outline-secondary"><i class="bi bi-eye-fill"></i></div></td>
       </tr>

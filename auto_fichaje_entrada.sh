@@ -173,7 +173,22 @@ get_upcoming_schedules() {
     " 2>/dev/null
 }
 
-# Función para verificar si ya existe una entrada para la fecha específica
+# Función para verificar el último fichaje del usuario (más elegante que verificar entradas por día)
+check_last_fichaje_type() {
+    local user_numero="$1"
+    
+    # Obtener el tipo del último fichaje del usuario
+    local last_type=$(TZ=UTC mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASSWORD" -D"$DB_NAME" -se "
+        SELECT tipo FROM fichajes 
+        WHERE usuario_id = (SELECT id FROM usuarios WHERE numero = '$user_numero')
+        ORDER BY dia DESC, hora DESC 
+        LIMIT 1
+    " 2>/dev/null)
+    
+    echo "${last_type:-NONE}"
+}
+
+# Función para verificar si ya existe una entrada para la fecha específica (DEPRECIADA - usar check_last_fichaje_type)
 check_existing_entrada() {
     local user_numero="$1"
     local fecha="$2"  # formato YYYY-MM-DD
@@ -495,11 +510,15 @@ process_upcoming_schedules() {
         if is_schedule_upcoming "$hora_inicio" "$timezone" "$hora_actual_minutos" "$VENTANA_DETECCION" "$fecha_actual"; then
             log_message "INFO" "Horario próximo detectado para $nombre_empleado ($numero) - Local: $hora_inicio ($timezone), UTC: $hora_inicio_utc" "$LOG_FILE"
             
-            # Verificar si ya existe entrada para hoy
-            local existing_entrada=$(check_existing_entrada "$numero" "$fecha_actual")
-            if [[ $existing_entrada -gt 0 ]]; then
-                log_message "INFO" "Ya existe entrada para $nombre_empleado en $fecha_actual. Saltando." "$LOG_FILE"
+            # Verificar el último fichaje del usuario para determinar si puede fichar entrada
+            local last_fichaje_type=$(check_last_fichaje_type "$numero")
+            if [[ "$last_fichaje_type" == "ENTRADA" ]]; then
+                log_message "INFO" "Último fichaje de $nombre_empleado fue ENTRADA. Esperando salida antes de permitir nueva entrada." "$LOG_FILE"
                 continue
+            elif [[ "$last_fichaje_type" == "SALIDA" ]]; then
+                log_message "INFO" "Último fichaje de $nombre_empleado fue SALIDA. Puede realizar nueva entrada." "$LOG_FILE"
+            elif [[ "$last_fichaje_type" == "NONE" ]]; then
+                log_message "INFO" "Primer fichaje para $nombre_empleado. Puede realizar entrada." "$LOG_FILE"
             fi
             
             # Generar hora de fichaje aleatoria (en UTC)
